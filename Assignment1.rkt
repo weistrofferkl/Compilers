@@ -6,23 +6,25 @@
 
 ; defines a token struct, which contains a type (to indicate the type of token)
 ; and a representation, which is the string representation of the token
-(define-struct token (type repr) #:transparent
-  (struct (token LEFTPAREN #\()
-    (token RIGHTPAREN #\))
-    (token ADD "+")
-    (token MULT "*")
-    (token DIGIT (or "1" "2" "3" "4" "5" "6" "7" "8" "9" "0"))
-    )
-  )
+(define-struct token (type repr) #:transparent)
+
 
 ; creates a lexer (a struct, perhaps?) that prepares to lex a particular file
 (define (lexer filename)
   (struct(
-          (open-input-string filename)
-          (cond ([eof] "END OF FILE")
-                (else get-next-token lexer)))
+          (let ([x (read-char(open-input-string filename))])
+          (cond
+               [(eq? x eof) (token ENDOFFILE x)]
+               [(eq? x #\() (token LEFTPAREN x)]
+               [(eq? x #\)) (token RIGHTPAREN x)]
+               [(eq? x #\+) (token ADD x)]
+               [(eq? x #\*) (token MULT x)]
+               [(eq? x char-numeric) (token DIGIT x)]
+               )
+            )
+          )
+    )
   )
-
 
 ; gets the next token on the input stream associated with the lexer
 (define (get-next-token lexer)
@@ -36,4 +38,4 @@
 
   
 (define (parse-operator ... ) ... )
-(define (parse-expression ... ) ... )
+(define (parse-expression ... ))
