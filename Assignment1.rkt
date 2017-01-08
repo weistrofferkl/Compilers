@@ -13,6 +13,7 @@
 
 (define-struct token (type repr) #:transparent
 
+  
    ; a guard is a function that 'tests' the values you put into the structure
    ; remember: racket is dynamically typed so you kinda have to check things to
    ; save yourself a ton of grief later (trust me)
@@ -24,11 +25,31 @@
              (error "expected a string? or eof? for token-repr, got" repr)
              (values type repr)))))
 
+(define (is-token-type? type)
+  (cond
+    [(eq? type 'eof) #t]
+    [(eq? type 'lparen) #t]
+    [(eq? type 'rparen) #t]
+    [(eq? type 'op) #t]
+    [(eq? type 'digit) #t]
+    [else #f]))
+
 
 ; input-port -> token
 ; returns the next input token from the input port
 (define (get-next-token input-port)
-  (read-char input-port)
+  (let ([x (read-char input-port)])
+    (cond
+               [(eq? x eof) (token 'eof x)]
+               [(eq? x #\() (token 'lparen x)]
+               [(eq? x #\)) (token 'rparen x)]
+               [(eq? x #\+) (token 'op x)]
+               [(eq? x #\*) (token 'op x)]
+               [(char-numeric? x) (token 'digit x)]
+               [else (token 'invalid x)]
+               )
+    )
+    
  )
 
 ; creates a lexer (a struct, perhaps?) that prepares to lex a particular file
@@ -36,20 +57,22 @@
 ; this function creates a function that uses get-next-token on the string that was passed in,
 ; notice how we pass create the input by using open-input-string
 (define (lexstr str)
-  (struct(
-          (let ([x (read-char(open-input-string str))])
-          (cond
-               [(eq? x eof) (token 'eof x)]
-               [(eq? x #\() (token 'lparen x)]
-               [(eq? x #\)) (token 'rparen x)]
-               [(eq? x #\+) (token 'op x)]
-               [(eq? x #\*) (token 'op x)]
-               [(eq? x char-numeric) (token 'digit x)]
-               )
+  ;(struct thing(
+          (let ([x (open-input-string str)])
+         ; (cond
+         ;      [(eq? x eof) (token 'eof x)]
+         ;      [(eq? x #\() (token 'lparen x)]
+         ;      [(eq? x #\)) (token 'rparen x)]
+         ;      [(eq? x #\+) (token 'op x)]
+         ;      [(eq? x #\*) (token 'op x)]
+         ;      [(char-numeric? x) (token 'digit x)]
+         ;      [else (token 'invalid x)]
+         ;      )
+             (λ () (get-next-token x)))
             )
-          )
-    )
-  )
+         ; )
+    
+ 
 
  
 ; the parser should take a lexer and should return a struct or function
@@ -59,8 +82,8 @@
 ; the parser takes a function (probably produced by lexstr) that
 ; lexes the contents of the input stream
 
-(define (parser lex) ... )
+;(define (parser lex) ... )
 
   
-(define (parse-operator ... ) ... )
-(define (parse-expression ... ))
+;(define (parse-operator ... ) ... )
+;(define (parse-expression ... )...)
