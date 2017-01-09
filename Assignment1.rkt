@@ -60,6 +60,8 @@
           (let ([x (open-input-string str)])
              (λ () (get-next-token x)))
  )
+
+;(define string->number (string ch))
     
  
 
@@ -74,12 +76,9 @@
 (define (parser lex) ; function return a token
   (let ([tok (lex)])
   (cond
-    [(eq? (token-type tok) 'digit) (ast-node (token-repr token))]
-    [(eq? (token-type tok) 'lparen) ( (let ([lCh (parser lex)])
-                                      (let ([oper (lex)])
-                                      (let ([rCh (parser lex)])
-                                      (let ([endPar (lex)])
-                                        (ast-expr-node oper lCh rCh))))))]
+    [(eq? (token-type tok) 'digit) (ast-node (string->number(string (token-repr tok))))]
+    [(eq? (token-type tok) 'lparen) (let ([lCh (parser lex)] [oper (lex)] [rCh (parser lex)] [endPar (lex)])
+                                        (ast-expr-node oper lCh rCh))]
                                                                     
     [else '()]
     )
@@ -100,7 +99,11 @@
 (define (eval ast)
    (match ast
      ([ast-node v] v)
-     ([ast-expr-node lCh oper rCh] (eval lCh) oper (eval rCh))
+     ([ast-expr-node (token _ oper) lCh rCh] (let ([leftCh lCh] [operator oper] [rightCh rCh])
+                                     (cond
+                                       [(eq? operator #\+) (+ (eval leftCh) (eval rightCh))]
+                                       [(eq? operator #\*)(* (eval leftCh) (eval rightCh))]
+                                       )))
      ))
 
 ; str -> val
