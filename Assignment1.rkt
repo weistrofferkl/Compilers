@@ -72,10 +72,16 @@
 ; lexes the contents of the input stream
 
 (define (parser lex) ; function return a token
-  (let ([x lex])
+  (let ([tok (lex)])
   (cond
-    [(eq? x 'lparen) ast-expr-node ]
-    [else (ast-node x)]
+    [(eq? (token-type tok) 'digit) (ast-node (token-repr token))]
+    [(eq? (token-type tok) 'lparen) ( (let ([lCh (parser lex)])
+                                      (let ([oper (lex)])
+                                      (let ([rCh (parser lex)])
+                                      (let ([endPar (lex)])
+                                        (ast-expr-node oper lCh rCh))))))]
+                                                                    
+    [else '()]
     )
    
   )
@@ -93,13 +99,12 @@
 ; note that we assume the tree was built correctly!
 (define (eval ast)
    (match ast
-     ([ast-node v] v) ...))
+     ([ast-node v] v)
+     ([ast-expr-node lCh oper rCh] (eval lCh) oper (eval rCh))
+     ))
 
 ; str -> val
 ; takes a string, creates the lexer and parser and then evaluates it
 (define (evalstr str)
   (let ([lexer (lexstr str)])
     (eval (parser lexer))))
-  
-;(define (parse-operator ... ) ... )
-;(define (parse-expression ... )...)
