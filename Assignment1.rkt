@@ -1,4 +1,5 @@
 #lang racket
+(provide (all-defined-out))
 ;(open-input-string "")
 ;In this assignment, you will implement an interpreter for fully parenthesized expressions.
 ;For example: ((2+3)*5) should output 25. 
@@ -61,8 +62,6 @@
              (λ () (get-next-token x)))
  )
 
-;(define string->number (string ch))
-    
  
 
  
@@ -77,10 +76,16 @@
   (let ([tok (lex)])
   (cond
     [(eq? (token-type tok) 'digit) (ast-node (string->number(string (token-repr tok))))]
-    [(eq? (token-type tok) 'lparen) (let ([lCh (parser lex)] [oper (lex)] [rCh (parser lex)] [endPar (lex)])
+    [(eq? (token-type tok) 'lparen) (let ([lCh (parser lex)]
+                                          [oper (parser lex)]
+                                          [rCh (parser lex)]
+                                          [endPar (lex)])
                                         (ast-expr-node oper lCh rCh))]
+    [(eq? (token-type tok) 'op) (token-repr tok)]
+    [(eq? (token-type tok) 'rparen) (error "WTF PAREN")]
+    [(eq? (token-type tok) 'eof) '()]
                                                                     
-    [else '()]
+    [else (error "WTF")]
     )
    
   )
@@ -99,7 +104,7 @@
 (define (eval ast)
    (match ast
      ([ast-node v] v)
-     ([ast-expr-node (token _ oper) lCh rCh] (let ([leftCh lCh] [operator oper] [rightCh rCh])
+     ([ast-expr-node oper lCh rCh] (let ([leftCh lCh] [operator oper] [rightCh rCh])
                                      (cond
                                        [(eq? operator #\+) (+ (eval leftCh) (eval rightCh))]
                                        [(eq? operator #\*)(* (eval leftCh) (eval rightCh))]
