@@ -57,20 +57,9 @@
 ; this function creates a function that uses get-next-token on the string that was passed in,
 ; notice how we pass create the input by using open-input-string
 (define (lexstr str)
-  ;(struct thing(
           (let ([x (open-input-string str)])
-         ; (cond
-         ;      [(eq? x eof) (token 'eof x)]
-         ;      [(eq? x #\() (token 'lparen x)]
-         ;      [(eq? x #\)) (token 'rparen x)]
-         ;      [(eq? x #\+) (token 'op x)]
-         ;      [(eq? x #\*) (token 'op x)]
-         ;      [(char-numeric? x) (token 'digit x)]
-         ;      [else (token 'invalid x)]
-         ;      )
              (λ () (get-next-token x)))
-            )
-         ; )
+ )
     
  
 
@@ -82,8 +71,35 @@
 ; the parser takes a function (probably produced by lexstr) that
 ; lexes the contents of the input stream
 
-;(define (parser lex) ... )
+(define (parser lex) ; function return a token
+  (let ([x lex])
+  (cond
+    [(eq? x 'lparen) ast-expr-node ]
+    [else (ast-node x)]
+    )
+   
+  )
+)
 
+; value node for numbers
+(struct ast-node (val) #:transparent)
+
+; expression nodes for operators 
+(struct ast-expr-node (operator left-child right-child) #:transparent)
+
+
+; ast -> val
+; this function takes an AST and returns the calculated value
+; note that we assume the tree was built correctly!
+(define (eval ast)
+   (match ast
+     ([ast-node v] v) ...))
+
+; str -> val
+; takes a string, creates the lexer and parser and then evaluates it
+(define (evalstr str)
+  (let ([lexer (lexstr str)])
+    (eval (parser lexer))))
   
 ;(define (parse-operator ... ) ... )
 ;(define (parse-expression ... )...)
