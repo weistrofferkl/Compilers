@@ -3,12 +3,12 @@
          parser-tools/yacc
          (prefix-in : parser-tools/lex-sre))
 
-(define-tokens value-tokens (NUM ID STRING))
+(define-tokens value-tokens (NUM ID STRING)) ;NEED ID, STRING
 (define-empty-tokens paren-types (LPAREN RPAREN LBRACKET RBRACKET LBRACE RBRACE)) ;done
 (define-empty-tokens operators (ADD MULT DIV SUB DOT)) ;done
 (define-empty-tokens punct (COMMA COLON SEMI)) ; done
-(define-empty-tokens comparators (EQ NE LT GT LE GE))
-(define-empty-tokens boolops (BOOLOR BOOLAND))
+(define-empty-tokens comparators (EQ NE LT GT LE GE)) ;donne
+(define-empty-tokens boolops (BOOLOR BOOLAND)) ;done
 
 (define-empty-tokens keywords (AND ARRAY AS BREAK DO ELSE END IF IN IS ;done
  JUNIPER KIND LET NEEWOM NI NOW OF PENG THEN
@@ -54,6 +54,19 @@
    ["#//" (token-DIV)]
    ["#/-" (token-SUB)]
    ["#/." (token-DOT)]
+   ;Comparators EQ NE LT GT LE GE
+   ["#/=" (token-EQ)]
+   ["#/<>" (token-NE)]
+   ["#/<" (token-LT)]
+   ["#/>" (token-GT)]
+   ["#/<=" (token-LE)]
+   ["#/>=" (token-GE)]
+   ;boolops:BOOLOR BOOLAND
+   ["#/|" (token-BOOLOR)]
+   ["#/&" (token-BOOLAND)]
+   
+   
+   
    ;Punctuation COMMA COLON SEMI
    ["#/," (token-COMMA)]
    ["#/:" (token-COLON)]
