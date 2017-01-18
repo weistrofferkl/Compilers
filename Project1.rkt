@@ -18,7 +18,7 @@
 (define-empty-tokens endoffile (EOF)) ;done
 
 (define nilexer
-  (lexer
+  (lexer-src-pos ;Tells where syntax error does, also lets you define error functions
    ;Keywords
    ["define" (token-DEFINE)]
    ["neewom" (token-NEEWOM)]
@@ -86,14 +86,14 @@
 (define (lexstr str)
   (letrec ([in (open-input-string str)]
         [lexfun (λ (i) (let ([tok (nilexer i)])
-                         (cond [(eq? tok (token-EOF)) '()]
-                               [else (cons tok (lexfun i))])))])
+                         (cond [(eq? (position-token-token tok) (token-EOF)) '()]
+                               [else (cons (position-token-token tok) (lexfun i))])))])
     (lexfun in)))
 
 (define (lexfile filename)
     (letrec ([in (open-input-file filename)]
         [lexfun (λ (i) (let ([tok (nilexer i)])
-                         (cond [(eq? tok (token-EOF)) '()]
-                               [else (cons tok (lexfun i))])))])
+                         (cond [(eq? (position-token-token tok) (token-EOF)) '()]
+                               [else (cons (position-token-token tok) (lexfun i))])))])
     (lexfun in)))
    
