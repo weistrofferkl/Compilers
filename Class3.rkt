@@ -36,3 +36,5 @@
 ;(check-expect (lexstr "5") (token-NUMBER "56"))
 
 (test)
+(command-line
+ #:args (filename)filename)

@@ -3,8 +3,9 @@
          parser-tools/yacc
          (prefix-in : parser-tools/lex-sre))
 (require racket/cmdline)
+(require test-engine/racket-tests)
 
-(define-tokens value-tokens (NUM ID STRING)) ;NEED STRING
+(define-tokens value-tokens (NUM ID STRING))
 (define-empty-tokens paren-types (LPAREN RPAREN LBRACKET RBRACKET LBRACE RBRACE)) ;done
 (define-empty-tokens operators (ADD MULT DIV SUB DOT)) ;done
 (define-empty-tokens punct (COMMA COLON SEMI)) ; done
@@ -57,12 +58,12 @@
    [#\-  (token-SUB)]
    [#\. (token-DOT)]
    ;Comparators EQ NE LT GT LE GE
-   ["#/=" (token-EQ)]
-   ["#/<>" (token-NE)]
-   ["#/<" (token-LT)]
-   ["#/>" (token-GT)]
-   ["#/<=" (token-LE)]
-   ["#/>=" (token-GE)]
+   ["=" (token-EQ)]
+   ["<>" (token-NE)]
+   ["<" (token-LT)]
+   [">" (token-GT)]
+   ["<=" (token-LE)]
+   [">=" (token-GE)]
    ;boolops:BOOLOR BOOLAND
    [#\| (token-BOOLOR)]
    [#\& (token-BOOLAND)]
@@ -75,9 +76,12 @@
    ;ID
    [(:: alphabetic (:seq (:* (:or alphabetic numeric #\_ #\-)) (:* #\'))) (token-ID lexeme)];
    ;String - Match first quote, everything that's not a \" and then the final end quote
-   [(:: #\" (complement (:: #\/ #\")) #\")(token-STRING lexeme)]
+   [(:: #\" (complement (:: #\\ #\")) #\")(token-STRING lexeme)]
    ;Whitespace
-   [whitespace (nilexer input-port)]
+   [whitespace (return-without-pos (nilexer input-port))]
+   ;comment:
+   [(:: #\/ #\* (complement (:: #\* #\/)) #\* #\/) (return-without-pos (nilexer input-port))]
+   [(:: #\/ #\/ (complement (:or (:: #\\ #\n (:: #\r #\n)))) (:or (:: #\\ #\n) (:: #\r #\n))) (return-without-pos (nilexer input-port))]
    ;EOF
    [(eof) (token-EOF)]
   
@@ -96,4 +100,57 @@
                          (cond [(eq? (position-token-token tok) (token-EOF)) '()]
                                [else (cons (position-token-token tok) (lexfun i))])))])
     (lexfun in)))
-   
+
+(check-expect (lexstr "and") (list (token-AND)))
+(check-expect (lexstr "array") (list (token-ARRAY)))
+(check-expect (lexstr "as") (list (token-AS)))
+(check-expect (lexstr "break") (list (token-BREAK)))
+(check-expect (lexstr "do") (list (token-DO)))
+(check-expect (lexstr "else") (list (token-ELSE)))
+(check-expect (lexstr "end") (list (token-END)))
+(check-expect (lexstr "if") (list (token-IF)))
+(check-expect (lexstr "in") (list (token-IN)))
+(check-expect (lexstr "is") (list (token-IS)))
+(check-expect (lexstr "juniper") (list (token-JUNIPER)))
+(check-expect (lexstr "kind") (list (token-KIND)))
+(check-expect (lexstr "let") (list (token-LET)))
+(check-expect (lexstr "neewom") (list (token-NEEWOM)))
+(check-expect (lexstr "ni") (list (token-NI)))
+(check-expect (lexstr "now") (list (token-NOW)))
+(check-expect (lexstr "of") (list (token-OF)))
+(check-expect (lexstr "peng") (list (token-PENG)))
+(check-expect (lexstr "]") (list (token-RBRACKET)))
+(check-expect (lexstr "[") (list (token-LBRACKET)))
+(check-expect (lexstr "}") (list (token-RBRACE)))
+(check-expect (lexstr "{") (list (token-LBRACE)))
+(check-expect (lexstr ")") (list (token-RPAREN)))
+(check-expect (lexstr "(") (list (token-LPAREN)))
+(check-expect (lexstr "+") (list (token-ADD)))
+(check-expect (lexstr "-") (list (token-SUB)))
+(check-expect (lexstr "/") (list (token-DIV)))
+(check-expect (lexstr "*") (list (token-MULT)))
+(check-expect (lexstr ";") (list (token-SEMI)))
+(check-expect (lexstr ",") (list (token-COMMA)))
+(check-expect (lexstr ":") (list (token-COLON)))
+(check-expect (lexstr ">") (list (token-GT)))
+(check-expect (lexstr "<") (list (token-LT)))
+(check-expect (lexstr "=") (list (token-EQ)))
+(check-expect (lexstr ">=") (list (token-GE)))
+(check-expect (lexstr "<=") (list (token-LE)))
+(check-expect (lexstr "&") (list (token-BOOLAND)))
+(check-expect (lexstr "|") (list (token-BOOLOR)))
+(check-expect (lexstr "1") (list (token-NUM "1")))
+(check-expect (lexstr "ax") (list (token-ID "ax")))
+(check-expect (lexstr (string-append (string #\") (string #\\) (string #\") "Hello world" (string #\\) (string #\") (string #\")))
+ (list (token-STRING (string-append (string #\") (string #\\) (string #\") "Hello world" (string #\\) (string #\") (string #\") ))))
+(check-expect (lexstr "") '())
+
+
+(check-expect (lexstr "ni") (list (token-NI)))
+(check-expect (lexstr "5") (list (token-NUM "5")))
+(check-expect (lexstr "56") (list (token-NUM "56")))
+(check-expect (lexstr "/* Hello
+there */") '())
+;(test)
+(command-line
+ #:args (filename)(begin (printf "compiling ~a\n" filename) (lexfile filename)))
