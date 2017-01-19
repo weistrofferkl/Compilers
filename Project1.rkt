@@ -16,7 +16,7 @@
  JUNIPER KIND LET NEEWOM NI NOW OF PENG THEN
  TO WHILE WITH DEFINE))
 
-(define-empty-tokens endoffile (EOF)) ;done
+(define-empty-tokens endoffile (EOF));done
 
 (define nilexer
   (lexer-src-pos ;Tells where syntax error does, also lets you define error functions
@@ -81,7 +81,7 @@
    [whitespace (return-without-pos (nilexer input-port))]
    ;comment:
    [(:: #\/ #\* (complement (:: #\* #\/)) #\* #\/) (return-without-pos (nilexer input-port))]
-   [(:: #\/ #\/ (complement (:or (:: #\\ #\n (:: #\r #\n)))) (:or (:: #\\ #\n) (:: #\r #\n))) (return-without-pos (nilexer input-port))]
+   [(:: #\/ #\/ (repetition 0 +inf.0 (char-complement  #\newline)) #\newline) (return-without-pos (nilexer input-port))]
    ;EOF
    [(eof) (token-EOF)]
   
@@ -151,6 +151,6 @@
 (check-expect (lexstr "56") (list (token-NUM "56")))
 (check-expect (lexstr "/* Hello
 there */") '())
-;(test)
+(test)
 (command-line
  #:args (filename)(begin (printf "compiling ~a\n" filename) (lexfile filename)))
