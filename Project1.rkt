@@ -76,7 +76,9 @@
    ;ID
    [(:: alphabetic (:seq (:* (:or alphabetic numeric #\_ #\-)) (:* #\'))) (token-ID lexeme)];
    ;String - Match first quote, everything that's not a \" and then the final end quote
-   [(:: #\" (complement (:: #\\ #\")) #\")(token-STRING lexeme)]
+   ;[(:: #\" (complement (:: #\\ #\")) #\")(token-STRING lexeme)]
+   [(:: #\" (repetition 0 +inf.0(:or (:: #\\ any-char) (:~ #\" #\\))) #\")(token-STRING lexeme)]
+   
    ;Whitespace
    [whitespace (return-without-pos (nilexer input-port))]
    ;comment:
@@ -151,6 +153,10 @@
 (check-expect (lexstr "56") (list (token-NUM "56")))
 (check-expect (lexstr "/* Hello
 there */") '())
+
+(check-expect (lexstr "// this is a comment \n5+3") (list (token-NUM "5") (token-ADD) (token-NUM "3")))
+(check-expect (lexstr "\"\\\\\"a\"\"") (list (token-STRING "\"\\\\\"") (token-ID "a") (token-STRING "\"\"")))
+(check-expect (lexstr "\"you had me at \\\"hello\\\"\"") (list (token-STRING "\"you had me at \\\"hello\\\"\"")))
 (test)
 (command-line
  #:args (filename)(begin (printf "compiling ~a\n" filename) (lexfile filename)))
