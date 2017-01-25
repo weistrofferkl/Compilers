@@ -1,9 +1,11 @@
 #lang racket
+(provide (all-defined-out))
 (require parser-tools/lex
          parser-tools/yacc
          (prefix-in : parser-tools/lex-sre))
 (require racket/cmdline)
 (require test-engine/racket-tests)
+
 
 (define-tokens value-tokens (NUM ID STRING))
 (define-empty-tokens paren-types (LPAREN RPAREN LBRACKET RBRACKET LBRACE RBRACE)) ;done
