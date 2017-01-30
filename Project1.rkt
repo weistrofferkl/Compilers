@@ -160,5 +160,5 @@ there */") '())
 (check-expect (lexstr "\"\\\\\"a\"\"") (list (token-STRING "\"\\\\\"") (token-ID "a") (token-STRING "\"\"")))
 (check-expect (lexstr "\"you had me at \\\"hello\\\"\"") (list (token-STRING "\"you had me at \\\"hello\\\"\"")))
 (test)
-(command-line
- #:args (filename)(begin (printf "compiling ~a\n" filename) (lexfile filename)))
+;(command-line
+; #:args (filename)(begin (printf "compiling ~a\n" filename) (lexfile filename)))
