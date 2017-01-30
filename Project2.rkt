@@ -136,9 +136,40 @@
    
     (type
      [(ID) $1])
+
+    (expression
+     [(simple-expression) $1]
+     [(mathExpression) $1]
+     [(boolExpression)$1])
+
+    ;Math Expressions: With Prescidence 
+    (mathExpression
+      [(mathExpression ADD expression) (MathExpr $1 '+ $3)]
+      [(mathExpression SUB expression) (MathExpr $1 '- $3)]
+      [(term) $1]
+      )
+    (term
+      [(term MULT factor) (MathExpr $1 '* $3)]
+      [(term DIV factor) (MathExpr $1 '/ $3)]
+      [(factor) $1]
+      )
+    (factor
+     [(expression) $1]
+     )
+     
+
+  (boolExpression
+      [(expression EQ mathExpression) (BoolExpr $1 'eq $3)]
+      [(expression NE mathExpression) (BoolExpr $1 'ne $3)]
+      [(expression LT mathExpression) (BoolExpr $1 'lt $3)]
+      [(expression GT mathExpression) (BoolExpr $1 'gt $3)]
+      [(expression LE mathExpression) (BoolExpr $1 'le $3)]
+      [(expression GE mathExpression) (BoolExpr $1 'ge $3)]
+      
+      )
     
 
-     (expression
+     (simple-expression
       [(NUM) (NumExpr $1)]
       [(BREAK) (BreakExpr)]
       [(LPAREN RPAREN) (NoVal)]
@@ -147,23 +178,17 @@
       [(PENG) (Peng)]
       [(STRING) (StringExpr $1)]
 
-      ;Bool Expressions
-      [(expression EQ expression) (BoolExpr $1 'eq $3)]
-      [(expression NE expression) (BoolExpr $1 'ne $3)]
-      [(expression LT expression) (BoolExpr $1 'lt $3)]
-      [(expression GT expression) (BoolExpr $1 'gt $3)]
-      [(expression LE expression) (BoolExpr $1 'le $3)]
-      [(expression GE expression) (BoolExpr $1 'ge $3)]
+     ; Bool Expressions
+     ; [(expression EQ expression) (BoolExpr $1 'eq $3)]
+     ; [(expression NE expression) (BoolExpr $1 'ne $3)]
+     ; [(expression LT expression) (BoolExpr $1 'lt $3)]
+     ; [(expression GT expression) (BoolExpr $1 'gt $3)]
+     ; [(expression LE expression) (BoolExpr $1 'le $3)]
+     ; [(expression GE expression) (BoolExpr $1 'ge $3)]
 
       ;Logic Expressions
       [(expression BOOLOR expression) (LogicExpr $1 'or $3)]
       [(expression BOOLAND expression) (LogicExpr $1 'and $3)]
-
-      ;Math Expressions
-      [(expression ADD expression) (MathExpr $1 '+ $3)]
-      [(expression SUB expression) (MathExpr $1 '- $3)]
-      [(expression MULT expression) (MathExpr $1 '* $3)]
-      [(expression DIV expression) (MathExpr $1 '/ $3)]
 
       ;Let
       [(LET decl IN expression END) (LetExpr $2 $4)]
