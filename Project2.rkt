@@ -11,11 +11,13 @@
 (struct Peng () #:transparent)
 
 ; var declarations
+;DONE
 (struct VarDecl (type id expr) #:transparent)
 
 ; type declarations--note they can be mutually recursive (using AND)
 ; so our struct has a link to the next one that belongs here, otherwise
 ; it's simply '()
+;DONE, DO AND RECURSION
 (struct NameType (name kind next) #:transparent)
 (struct RecordType (name fields next) #:transparent)
 (struct ArrayType (name kind next) #:transparent)
@@ -25,45 +27,74 @@
 ; these consist of the name of the function, the arguments to it,
 ; the return type (which may be #f if it doesn't have one) and the body
 ; finally, next points to the next, related definition (for mutual recursion)
+;DONE, DO RECURSION
 (struct FunDecl (name args rettype body next) #:transparent)
 
 ; things associated with expressions and lvalues
+;DONE
 (struct NumExpr (val) #:transparent)
+
 ; variable expressions
+;DONE
 (struct VarExpr (name) #:transparent)
+
 ; record expressions (name and a list of fields are required)
 (struct RecordExpr (name field) #:transparent)
+
 ; array expressions (name and expression for the index)
 (struct ArrayExpr (name expr) #:transparent)
+
 ; function call which is name and a list of arguments
 (struct FuncallExpr (name args) #:transparent)
+
 ; a string
+;DONE
 (struct StringExpr (str) #:transparent)
-; a noval 
+
+; a noval
+;DONE
 (struct NoVal () #:transparent)
+
 ; a list of declarations for the let and a list of expressions following it
+;DONE
 (struct LetExpr (decs exprs) #:transparent)
+
 ; arithmetic expression
+;DONE
 (struct MathExpr (expr1 op expr2) #:transparent)
+
 ; bool op, i.e., comparision
+;DONE
 (struct BoolExpr (expr1 op expr2) #:transparent)
+
 ; logic op, and or or
+;DONE
 (struct LogicExpr (expr1 op expr2) #:transparent)
+
 ; assignment in a field for creating a record
 (struct FieldAssign (name expr) #:transparent)
+
 ; creating a new record
 (struct NewRecordExpr (name assignments) #:transparent)
+
 ; creating a new array
+;DONE
 (struct NewArrayExpr (name expr kind) #:transparent)
+
 ; an if expression (hint, you may temporarily use an IfElseExpr if you
 ; would like to make it easy to see when you're matching or not
 (struct IfExpr (test true-branch false-branch) #:transparent)
+
 ; a while expression, which is a test and the body
 (struct WhileExpr (test body) #:transparent)
+
 ; an assignment expression
 (struct AssignmentExpr (name expr) #:transparent)
+
 ; break expression--this has no arguments
+;DONE
 (struct BreakExpr () #:transparent)
+
 ; with expression (think: for expression)
 (struct WithExpr (idname initexpr fromexpr toexpr) #:transparent)
 
@@ -98,24 +129,48 @@
     
    (recordRecurse
     [(type ID COMMA recordRecurse) (cons (TypeField $1 $2) $4)]
+    [(type ID recordRecurse) (cons (TypeField $1 $2) $3)]
     [(type ID) (list (TypeField $1 $2))]
+    [() '()]
     )
    
     (type
      [(ID) $1])
-
-   ; (type-decl
-   ;  [(DEFINE ID KIND AS type) (NameType $2 $5 '() )]
-   ; [(DEFINE ID KIND AS type OF type) (ArrayType $2 $7 '() )])
     
 
      (expression
       [(NUM) (NumExpr $1)]
       [(BREAK) (BreakExpr)]
       [(LPAREN RPAREN) (NoVal)]
-      [() $1]
+      [(ID) (VarExpr $1)]
+      [(ID LBRACKET expression RBRACKET OF expression) (NewArrayExpr $1 $3 $6)]
       [(PENG) (Peng)]
       [(STRING) (StringExpr $1)]
+
+      ;Bool Expressions
+      [(expression EQ expression) (BoolExpr $1 'eq $3)]
+      [(expression NE expression) (BoolExpr $1 'ne $3)]
+      [(expression LT expression) (BoolExpr $1 'lt $3)]
+      [(expression GT expression) (BoolExpr $1 'gt $3)]
+      [(expression LE expression) (BoolExpr $1 'le $3)]
+      [(expression GE expression) (BoolExpr $1 'ge $3)]
+
+      ;Logic Expressions
+      [(expression BOOLOR expression) (LogicExpr $1 'or $3)]
+      [(expression BOOLAND expression) (LogicExpr $1 'and $3)]
+
+      ;Math Expressions
+      [(expression ADD expression) (MathExpr $1 '+ $3)]
+      [(expression SUB expression) (MathExpr $1 '- $3)]
+      [(expression MULT expression) (MathExpr $1 '* $3)]
+      [(expression DIV expression) (MathExpr $1 '/ $3)]
+
+      ;Let
+      [(LET decl IN expression END) (LetExpr $2 $4)]
+
+      ;FunDecl
+      ;REMEBER TO DO RECURSIVE CALL TO NEXT: "finally, next points to the next, related definition (for mutual recursion)"
+      [(NEEWOM ID LPAREN recordRecurse RPAREN AS type IS expression) (FunDecl $2 $4 $7 $9 '())]
       )
 
 
