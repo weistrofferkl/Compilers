@@ -17,7 +17,7 @@
 ; type declarations--note they can be mutually recursive (using AND)
 ; so our struct has a link to the next one that belongs here, otherwise
 ; it's simply '()
-;DONE, DO AND RECURSION
+;DONE
 (struct NameType (name kind next) #:transparent)
 (struct RecordType (name fields next) #:transparent)
 (struct ArrayType (name kind next) #:transparent)
@@ -122,14 +122,16 @@
 
      [(NI ID IS expression) (VarDecl #f $2 $4)]
      [(NI type ID IS expression) (VarDecl $2 $3 $5)]
-     [(TypeDecls) $1]
-     )
+     [(TypeDecls) $1])
+    ; [(functDecls) $1])
+     
     
      (TypeDecl
       [(DEFINE ID KIND AS type) (NameType $2 $5 '() )]
       [(DEFINE ID KIND AS ARRAY OF type) (ArrayType $2 $7 '() )]
       [(DEFINE ID KIND AS LBRACE RBRACE)(RecordType $2 '() '())]
       [(DEFINE ID KIND AS LBRACE recordRecurse RBRACE)(RecordType $2 $6 '())]
+      [(NEEWOM ID LPAREN recordRecurse RPAREN AS type IS expression) (FunDecl $2 $4 $7 $9 '())]
       
      )
      (TypeDecls
@@ -138,19 +140,22 @@
        (match $1
          [(NameType name kind _) (NameType name kind $3)]
          [(ArrayType name kind _) (ArrayType name kind $3)]
-         [(RecordType name fields _)(RecordType name fields $3)])])
-     ; [(TypeDecl AND TypeDecls) (NameType (NameType-name $1) $3)]
-     ; [(TypeDecl AND TypeDecls) (ArrayType (ArrayType-
-      
-      
+         [(RecordType name fields _)(RecordType name fields $3)]
+         [(FunDecl name args rettype body _) (FunDecl name args rettype body $3)])])
       
     
 
      ;FunDecl
      ;REMEBER TO DO RECURSIVE CALL TO NEXT: "finally, next points to the next, related definition (for mutual recursion)"
-     (funDeclThing
-      [(NEEWOM ID LPAREN recordRecurse RPAREN AS type IS expression) (FunDecl $2 $4 $7 $9 '())]
-     )
+   ;  (functDecl
+   ;   [(NEEWOM ID LPAREN recordRecurse RPAREN AS type IS expression) (FunDecl $2 $4 $7 $9 '())]
+   ;  )
+   ;  (functDecls
+   ;   [(functDecl) $1]
+   ;   [(functDecl AND functDecls)
+    ;   (match $1
+     ;    [(FunDecl name args rettype body _) (FunDecl name args rettype body $3)])]
+     ; )
      
     
    (recordRecurse
