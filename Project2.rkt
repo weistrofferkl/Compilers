@@ -118,14 +118,40 @@
      [(decl) (list $1)]
      )
 
-    (decl ; REMEMBER TO DO AND
-    
+    (decl ; REMEMBER TO DO AND --> Muturally Recursive
+
      [(NI ID IS expression) (VarDecl #f $2 $4)]
      [(NI type ID IS expression) (VarDecl $2 $3 $5)]
-     [(DEFINE ID KIND AS type) (NameType $2 $5 '() )]
-     [(DEFINE ID KIND AS ARRAY OF type) (ArrayType $2 $7 '() )]
-     [(DEFINE ID KIND AS LBRACE RBRACE)(RecordType $2 '() '())]
-     [(DEFINE ID KIND AS LBRACE recordRecurse RBRACE)(RecordType $2 $6 '())])
+     [(TypeDecls) $1]
+     )
+    
+     (TypeDecl
+      [(DEFINE ID KIND AS type) (NameType $2 $5 '() )]
+      [(DEFINE ID KIND AS ARRAY OF type) (ArrayType $2 $7 '() )]
+      [(DEFINE ID KIND AS LBRACE RBRACE)(RecordType $2 '() '())]
+      [(DEFINE ID KIND AS LBRACE recordRecurse RBRACE)(RecordType $2 $6 '())]
+      
+     )
+     (TypeDecls
+      [(TypeDecl) $1]
+      [(TypeDecl AND TypeDecls)
+       (match $1
+         [(NameType name kind _) (NameType name kind $3)]
+         [(ArrayType name kind _) (ArrayType name kind $3)]
+         [(RecordType name fields _)(RecordType name fields $3)])])
+     ; [(TypeDecl AND TypeDecls) (NameType (NameType-name $1) $3)]
+     ; [(TypeDecl AND TypeDecls) (ArrayType (ArrayType-
+      
+      
+      
+    
+
+     ;FunDecl
+     ;REMEBER TO DO RECURSIVE CALL TO NEXT: "finally, next points to the next, related definition (for mutual recursion)"
+     (funDeclThing
+      [(NEEWOM ID LPAREN recordRecurse RPAREN AS type IS expression) (FunDecl $2 $4 $7 $9 '())]
+     )
+     
     
    (recordRecurse
     [(type ID COMMA recordRecurse) (cons (TypeField $1 $2) $4)]
@@ -138,14 +164,15 @@
      [(ID) $1])
 
     (expression
-     [(simple-expression) $1]
-     [(mathExpression) $1]
-     [(boolExpression)$1])
+     ;[(simple-expression) $1]
+     ;[(mathExpression) $1]
+     [(boolExpression) $1])
 
     ;Math Expressions: With Prescidence 
     (mathExpression
-      [(mathExpression ADD expression) (MathExpr $1 '+ $3)]
-      [(mathExpression SUB expression) (MathExpr $1 '- $3)]
+      [(mathExpression ADD term) (MathExpr $1 '+ $3)]
+      [(mathExpression SUB term) (MathExpr $1 '- $3)]
+      [(SUB term) (MathExpr (NumExpr "0")'- $2)]
       [(term) $1]
       )
     (term
@@ -154,19 +181,28 @@
       [(factor) $1]
       )
     (factor
-     [(expression) $1]
+     [(simple-expression) $1]
      )
-     
 
+   ;Boolean Expressions
   (boolExpression
-      [(expression EQ mathExpression) (BoolExpr $1 'eq $3)]
-      [(expression NE mathExpression) (BoolExpr $1 'ne $3)]
-      [(expression LT mathExpression) (BoolExpr $1 'lt $3)]
-      [(expression GT mathExpression) (BoolExpr $1 'gt $3)]
-      [(expression LE mathExpression) (BoolExpr $1 'le $3)]
-      [(expression GE mathExpression) (BoolExpr $1 'ge $3)]
-      
+      [(logicExpression EQ logicExpression) (BoolExpr $1 'eq $3)]
+      [(logicExpression NE logicExpression) (BoolExpr $1 'ne $3)]
+      [(logicExpression LT logicExpression) (BoolExpr $1 'lt $3)]
+      [(logicExpression GT logicExpression) (BoolExpr $1 'gt $3)]
+      [(logicExpression LE logicExpression) (BoolExpr $1 'le $3)]
+      [(logicExpression GE logicExpression) (BoolExpr $1 'ge $3)]
+      [(logicExpression) $1]
       )
+
+  (logicExpression
+   [(logicExpression BOOLOR logTerm) (LogicExpr $1 'or $3)]
+   [(logTerm) $1]
+   )
+  
+  (logTerm
+   [(logTerm BOOLAND mathExpression) (LogicExpr $1 'and $3)]
+   [(mathExpression) $1])
     
 
      (simple-expression
@@ -177,25 +213,10 @@
       [(ID LBRACKET expression RBRACKET OF expression) (NewArrayExpr $1 $3 $6)]
       [(PENG) (Peng)]
       [(STRING) (StringExpr $1)]
-
-     ; Bool Expressions
-     ; [(expression EQ expression) (BoolExpr $1 'eq $3)]
-     ; [(expression NE expression) (BoolExpr $1 'ne $3)]
-     ; [(expression LT expression) (BoolExpr $1 'lt $3)]
-     ; [(expression GT expression) (BoolExpr $1 'gt $3)]
-     ; [(expression LE expression) (BoolExpr $1 'le $3)]
-     ; [(expression GE expression) (BoolExpr $1 'ge $3)]
-
-      ;Logic Expressions
-      [(expression BOOLOR expression) (LogicExpr $1 'or $3)]
-      [(expression BOOLAND expression) (LogicExpr $1 'and $3)]
+      [(LPAREN expression RPAREN) $2]
 
       ;Let
       [(LET decl IN expression END) (LetExpr $2 $4)]
-
-      ;FunDecl
-      ;REMEBER TO DO RECURSIVE CALL TO NEXT: "finally, next points to the next, related definition (for mutual recursion)"
-      [(NEEWOM ID LPAREN recordRecurse RPAREN AS type IS expression) (FunDecl $2 $4 $7 $9 '())]
       )
 
 
