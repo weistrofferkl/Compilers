@@ -27,7 +27,7 @@
 ; these consist of the name of the function, the arguments to it,
 ; the return type (which may be #f if it doesn't have one) and the body
 ; finally, next points to the next, related definition (for mutual recursion)
-;DONE, DO RECURSION
+;DONE, DO RECURSION? -DONE?
 (struct FunDecl (name args rettype body next) #:transparent)
 
 ; things associated with expressions and lvalues
@@ -45,6 +45,7 @@
 (struct ArrayExpr (name expr) #:transparent)
 
 ; function call which is name and a list of arguments
+;DONE
 (struct FuncallExpr (name args) #:transparent)
 
 ; a string
@@ -98,6 +99,12 @@
 ; with expression (think: for expression)
 (struct WithExpr (idname initexpr fromexpr toexpr) #:transparent)
 
+
+;WithExpr
+;AssignmentExpr
+;WhileExpr
+;IfExpr
+
 (define niparser
   (cfg-parser
    (src-pos)
@@ -118,14 +125,26 @@
      [(decl) (list $1)]
      )
 
-    (decl ; REMEMBER TO DO AND --> Muturally Recursive
+    (decl 
 
-     [(NI ID IS expression) (VarDecl #f $2 $4)]
-     [(NI type ID IS expression) (VarDecl $2 $3 $5)]
-     [(TypeDecls) $1])
+   ;  [(NI ID IS expression) (VarDecl #f $2 $4)]
+   ;  [(NI type ID IS expression) (VarDecl $2 $3 $5)]
+     [(vDecl) (list $1)]
+     [(TypeDecls) (list $1)]
+     [(vDecl decl) (cons $1 $2)]
+     [(TypeDecls decl) (cons $1 $2)]
+     [() '()]
+     )
     ; [(functDecls) $1])
      
+
+    (vDecl
+     [(NI ID IS expression) (VarDecl #f $2 $4)]
+     [(NI type ID IS expression) (VarDecl $2 $3 $5)]
+     )
     
+
+     
      (TypeDecl
       [(DEFINE ID KIND AS type) (NameType $2 $5 '() )]
       [(DEFINE ID KIND AS ARRAY OF type) (ArrayType $2 $7 '() )]
@@ -164,13 +183,27 @@
     [(type ID) (list (TypeField $1 $2))]
     [() '()]
     )
+
+   (functPars
+    [() '()]
+    [(expression COMMA functPars) (cons $1 $3)]
+    [(expression) (list $1)])
+
+   (letPars
+    [() '()]
+    [(expression SEMI letPars) (cons $1 $3)]
+    [(expression) (list $1)])
+
+   (LValue
+    [(ID) (VarExpr $1)]
+    [(LValue DOT ID) (RecordExpr $1 $3)]
+    [(LValue LBRACKET expression RBRACKET) (ArrayExpr $1 $3)])
+
    
     (type
      [(ID) $1])
 
     (expression
-     ;[(simple-expression) $1]
-     ;[(mathExpression) $1]
      [(boolExpression) $1])
 
     ;Math Expressions: With Prescidence 
@@ -188,6 +221,8 @@
     (factor
      [(simple-expression) $1]
      )
+
+
 
    ;Boolean Expressions
   (boolExpression
@@ -215,13 +250,33 @@
       [(BREAK) (BreakExpr)]
       [(LPAREN RPAREN) (NoVal)]
       [(ID) (VarExpr $1)]
+      ;NewArrayExpression
       [(ID LBRACKET expression RBRACKET OF expression) (NewArrayExpr $1 $3 $6)]
       [(PENG) (Peng)]
       [(STRING) (StringExpr $1)]
       [(LPAREN expression RPAREN) $2]
+      [(LValue) $1]
+      
+      ;FunCallExpr
+      [(ID LPAREN functPars RPAREN) (FuncallExpr $1 $3)]
 
       ;Let
-      [(LET decl IN expression END) (LetExpr $2 $4)]
+      [(LET decl IN letPars END) (LetExpr $2 $4)]
+
+      ;FieldAssign
+      [(ID IS expression)(FieldAssign $1 $3)]
+
+      ;NewRecordExpression
+      ([ID LBRACE functPars RBRACE] (NewRecordExpr $1 $3))
+      
+      ;RecordExpression
+     ; ([LValue DOT ID] (RecordExpr $1 $3))
+      
+      ;ArrayExpression
+     ; ([LValue LBRACKET expression RBRACKET] (ArrayExpr $1 $3))
+      
+
+      
       )
 
 
@@ -237,6 +292,7 @@
   (lambda () (nilexer in)))
 
 
-   
+;Test cases:
+;(parse-str "let ni x is 5 in 5; 6; end")
 
 
