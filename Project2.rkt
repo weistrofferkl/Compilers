@@ -100,8 +100,7 @@
 (struct WithExpr (idname initexpr fromexpr toexpr) #:transparent)
 
 
-;WithExpr
-;AssignmentExpr
+;SEMICOLON
 ;WhileExpr
 ;IfExpr
 
@@ -196,7 +195,9 @@
 
    (LValue
     [(ID) (VarExpr $1)]
+    ;Record Expression
     [(LValue DOT ID) (RecordExpr $1 $3)]
+    ;Array Expression
     [(LValue LBRACKET expression RBRACKET) (ArrayExpr $1 $3)])
 
    
@@ -267,16 +268,14 @@
       [(ID IS expression)(FieldAssign $1 $3)]
 
       ;NewRecordExpression
-      ([ID LBRACE functPars RBRACE] (NewRecordExpr $1 $3))
-      
-      ;RecordExpression
-     ; ([LValue DOT ID] (RecordExpr $1 $3))
-      
-      ;ArrayExpression
-     ; ([LValue LBRACKET expression RBRACKET] (ArrayExpr $1 $3))
-      
+      [(ID LBRACE functPars RBRACE) (NewRecordExpr $1 $3)]
+      ;WithExpr
+      [(WITH ID AS expression TO expression DO expression END) (WithExpr $2 $8 $4 $6)]
+      ;IfExpr
+    ;  [(IF ID boolExpression expression THEN)
 
-      
+      [(NOW LValue IS expression) (AssignmentExpr $2 $4)]
+
       )
 
 
