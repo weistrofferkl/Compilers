@@ -39,9 +39,11 @@
 (struct VarExpr (name) #:transparent)
 
 ; record expressions (name and a list of fields are required)
+;DONE
 (struct RecordExpr (name field) #:transparent)
 
 ; array expressions (name and expression for the index)
+;DONE
 (struct ArrayExpr (name expr) #:transparent)
 
 ; function call which is name and a list of arguments
@@ -73,9 +75,11 @@
 (struct LogicExpr (expr1 op expr2) #:transparent)
 
 ; assignment in a field for creating a record
+;DONE
 (struct FieldAssign (name expr) #:transparent)
 
 ; creating a new record
+;DONE
 (struct NewRecordExpr (name assignments) #:transparent)
 
 ; creating a new array
@@ -84,12 +88,15 @@
 
 ; an if expression (hint, you may temporarily use an IfElseExpr if you
 ; would like to make it easy to see when you're matching or not
+;DONE?
 (struct IfExpr (test true-branch false-branch) #:transparent)
 
 ; a while expression, which is a test and the body
+;DONE
 (struct WhileExpr (test body) #:transparent)
 
 ; an assignment expression
+;DONE
 (struct AssignmentExpr (name expr) #:transparent)
 
 ; break expression--this has no arguments
@@ -97,12 +104,12 @@
 (struct BreakExpr () #:transparent)
 
 ; with expression (think: for expression)
+;DONE
 (struct WithExpr (idname initexpr fromexpr toexpr) #:transparent)
 
 
 ;SEMICOLON
-;WhileExpr
-;IfExpr
+
 
 (define niparser
   (cfg-parser
@@ -160,20 +167,6 @@
          [(ArrayType name kind _) (ArrayType name kind $3)]
          [(RecordType name fields _)(RecordType name fields $3)]
          [(FunDecl name args rettype body _) (FunDecl name args rettype body $3)])])
-      
-    
-
-     ;FunDecl
-     ;REMEBER TO DO RECURSIVE CALL TO NEXT: "finally, next points to the next, related definition (for mutual recursion)"
-   ;  (functDecl
-   ;   [(NEEWOM ID LPAREN recordRecurse RPAREN AS type IS expression) (FunDecl $2 $4 $7 $9 '())]
-   ;  )
-   ;  (functDecls
-   ;   [(functDecl) $1]
-   ;   [(functDecl AND functDecls)
-    ;   (match $1
-     ;    [(FunDecl name args rettype body _) (FunDecl name args rettype body $3)])]
-     ; )
      
     
    (recordRecurse
@@ -271,10 +264,15 @@
       [(ID LBRACE functPars RBRACE) (NewRecordExpr $1 $3)]
       ;WithExpr
       [(WITH ID AS expression TO expression DO expression END) (WithExpr $2 $8 $4 $6)]
-      ;IfExpr
-    ;  [(IF ID boolExpression expression THEN)
-
+      ;IfExpr (struct IfExpr (test true-branch false-branch) #:transparent)
+     [(IF expression THEN expression ELSE expression END) (IfExpr $2 $4 $6)]
+     [(IF expression THEN expression END) (IfExpr $2 $2 $4)]
+      ;AssignmentExpr
       [(NOW LValue IS expression) (AssignmentExpr $2 $4)]
+      ;WhileExpr
+     ; (struct WhileExpr (test body) #:transparent)
+      
+      [(WHILE expression DO expression END) (WhileExpr $2 $4)]
 
       )
 
@@ -294,4 +292,43 @@
 ;Test cases:
 ;(parse-str "let ni x is 5 in 5; 6; end")
 
+; var declarations
+(check-expect (parse-str "ni x is 5") (list (VarDecl #f "x" (NumExpr "5"))))
+; type declarations
+(check-expect (parse-str "define int2 kind as int") (list (NameType "int2" "int" '())))
+(check-expect (parse-str "define intarr kind as array of int") (list (ArrayType "intarr" "int" '())))
+(check-expect (parse-str "define intrec kind as { int x }")
+              (list (RecordType "intrec" (list (TypeField "x" "int")) '())))
+; function declarations
+(check-expect (parse-str "neewom getX() as int is 5")
+              (list (FunDecl "getX" '() "int" (NumExpr "5") '())))
+; function calls of various sorts
+(check-expect (parse-str "add2(5)") (list (FuncallExpr "add2" (list (NumExpr "5")))))
+; parens
+(check-expect (parse-str "(5)") (list (NumExpr "5")))
+; various sequences
+(check-expect (parse-str "(6; 5)") (list (list (NumExpr "6") (NumExpr "5"))))
+; strings
+(check-expect (parse-str "\"Hello World\"") (list (StringExpr "\"Hello World\"")))
+; noval
+(check-expect (parse-str "()") (list (NoVal)))
+; let expressions
+(check-expect (parse-str "let ni x is 5 in x end")
+              (list (LetExpr (list (VarDecl #f "x" (NumExpr "5"))) (list (VarExpr "x")))))
+; math ops
+(check-expect (parse-str "1+2")
+              (list (MathExpr (NumExpr "1") '+ (NumExpr "2"))))
+; math ops using negated numbers
+(check-expect (parse-str "-5") (list (MathExpr (NumExpr "0") '- (NumExpr "5"))))
 
+; bool expressions
+(check-expect (parse-str "5=6") (list (BoolExpr (NumExpr "5") 'eq (NumExpr "6"))))
+
+; array creation
+(check-expect (parse-str "intarr[10] of 6")
+              (list (NewArrayExpr "intarr" (NumExpr "10") (NumExpr "6"))))
+
+; record expression
+(check-expect (parse-str "point { x is 6 }")
+              (list (NewRecordExpr "point" (list (FieldAssign "x" (NumExpr "6"))))))
+(test)
