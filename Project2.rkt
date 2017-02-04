@@ -128,21 +128,16 @@
      [(expression program) (cons $1 $2)]
      [(decl program) (cons $1 $2)]
      [(expression) (list $1)]
-     [(decl) (list $1)]
+     [(decl) $1] ;[(decl) (list $1)]
      )
 
     (decl 
-
-   ;  [(NI ID IS expression) (VarDecl #f $2 $4)]
-   ;  [(NI type ID IS expression) (VarDecl $2 $3 $5)]
-     [(vDecl) (list $1)]
-     [(TypeDecls) (list $1)]
+     [(vDecl) (list $1)] ;[(vDecl) (list $1)]
+     [(TypeDecls) (list $1)] ;[(TypeDecls) (list $1)]
      [(vDecl decl) (cons $1 $2)]
      [(TypeDecls decl) (cons $1 $2)]
      [() '()]
      )
-    ; [(functDecls) $1])
-     
 
     (vDecl
      [(NI ID IS expression) (VarDecl #f $2 $4)]
@@ -170,16 +165,16 @@
      
     
    (recordRecurse
-    [(type ID COMMA recordRecurse) (cons (TypeField $1 $2) $4)]
-    [(type ID recordRecurse) (cons (TypeField $1 $2) $3)]
-    [(type ID) (list (TypeField $1 $2))]
+    [(type ID COMMA recordRecurse) (cons (TypeField $2 $1) $4)]
+    [(type ID recordRecurse) (cons (TypeField $2 $1) $3)]
+    [(type ID) (list (TypeField $2 $1))]
     [() '()]
     )
 
    (functPars
     [() '()]
     [(expression COMMA functPars) (cons $1 $3)]
-    [(expression) (list $1)])
+    [(expression) (list $1)]) ;(list $1)
 
    (letPars
     [() '()]
