@@ -174,12 +174,19 @@
    (functPars
     [() '()]
     [(expression COMMA functPars) (cons $1 $3)]
+    
     [(expression) (list $1)]) ;(list $1)
 
    (letPars
     [() '()]
     [(expression SEMI letPars) (cons $1 $3)]
     [(expression) (list $1)])
+
+   (semiExpression
+    [() '()]
+    [( expression SEMI semiExpression ) (cons $1 $3)]
+    [(expression) (list $1)]
+    )
 
    (LValue
     [(ID) (VarExpr $1)]
@@ -238,16 +245,19 @@
       [(NUM) (NumExpr $1)]
       [(BREAK) (BreakExpr)]
       [(LPAREN RPAREN) (NoVal)]
+      [(ID LPAREN functPars RPAREN) (FuncallExpr $1 $3)]
       [(ID) (VarExpr $1)]
       ;NewArrayExpression
       [(ID LBRACKET expression RBRACKET OF expression) (NewArrayExpr $1 $3 $6)]
       [(PENG) (Peng)]
       [(STRING) (StringExpr $1)]
       [(LPAREN expression RPAREN) $2]
+      [(LPAREN semiExpression RPAREN) $2]
       [(LValue) $1]
-      
+      [(LPAREN expression SEMI expression RPAREN) (list $2 $4)]
+     
       ;FunCallExpr
-      [(ID LPAREN functPars RPAREN) (FuncallExpr $1 $3)]
+     ; [(ID LPAREN functPars RPAREN) (FuncallExpr $1 $3)]
 
       ;Let
       [(LET decl IN letPars END) (LetExpr $2 $4)]
