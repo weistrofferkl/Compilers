@@ -102,6 +102,7 @@
 ; break expression--this has no arguments
 ;DONE
 (struct BreakExpr () #:transparent)
+(struct PengExpr () #:transparent)
 
 ; with expression (think: for expression)
 ;DONE
@@ -152,6 +153,7 @@
       [(DEFINE ID KIND AS LBRACE RBRACE)(RecordType $2 '() '())]
       [(DEFINE ID KIND AS LBRACE recordRecurse RBRACE)(RecordType $2 $6 '())]
       [(NEEWOM ID LPAREN recordRecurse RPAREN AS type IS expression) (FunDecl $2 $4 $7 $9 '())]
+      [(NEEWOM ID LPAREN recordRecurse RPAREN IS expression) (FunDecl $2 $4 #f $7 '())]
       
      )
      (TypeDecls
@@ -171,11 +173,15 @@
     [() '()]
     )
 
+   (recordPars
+    [() '()]
+    [(ID IS expression COMMA recordPars) (cons (FieldAssign $1 $3) $5)]
+    [(ID IS expression) (list (FieldAssign $1 $3))])
+
    (functPars
     [() '()]
     [(expression COMMA functPars) (cons $1 $3)]
-    
-    [(expression) (list $1)]) ;(list $1)
+    [(expression) (list $1)])
 
    (letPars
     [() '()]
@@ -184,7 +190,7 @@
 
    (semiExpression
     [() '()]
-    [( expression SEMI semiExpression ) (cons $1 $3)]
+    [(expression SEMI semiExpression ) (cons $1 $3)]
     [(expression) (list $1)]
     )
 
@@ -246,10 +252,10 @@
       [(BREAK) (BreakExpr)]
       [(LPAREN RPAREN) (NoVal)]
       [(ID LPAREN functPars RPAREN) (FuncallExpr $1 $3)]
-      [(ID) (VarExpr $1)]
+     ; [(ID) (VarExpr $1)]
       ;NewArrayExpression
       [(ID LBRACKET expression RBRACKET OF expression) (NewArrayExpr $1 $3 $6)]
-      [(PENG) (Peng)]
+      [(PENG) (PengExpr)]
       [(STRING) (StringExpr $1)]
       [(LPAREN expression RPAREN) $2]
       [(LPAREN semiExpression RPAREN) $2]
@@ -263,10 +269,10 @@
       [(LET decl IN letPars END) (LetExpr $2 $4)]
 
       ;FieldAssign
-      [(ID IS expression)(FieldAssign $1 $3)]
+     ; [(ID IS expression)(FieldAssign $1 $3)]
 
       ;NewRecordExpression
-      [(ID LBRACE functPars RBRACE) (NewRecordExpr $1 $3)]
+      [(ID LBRACE recordPars RBRACE) (NewRecordExpr $1 $3)]
       ;WithExpr
       [(WITH ID AS expression TO expression DO expression END) (WithExpr $2 $8 $4 $6)]
       ;IfExpr (struct IfExpr (test true-branch false-branch) #:transparent)
@@ -285,13 +291,27 @@
      
      )))
 
-(define (parse-str str)
-     (let ([in (open-input-string str)])
-       (port-count-lines! in)
-       (niparser (get-tokenizer in))))
-
+; input port -> 0-arg function that returns next token
 (define (get-tokenizer in)
   (lambda () (nilexer in)))
+
+; input port -> ni ast   
+; construct an ast from the input port
+(define (build-ast in)
+  (port-count-lines! in)
+  (niparser (get-tokenizer in)))
+
+; string representing ni code -> ni ast
+; parses a string and turns it into an ast if possible
+(define (parse-str str)
+  (let ([in (open-input-string str)])
+    (build-ast in)))
+
+; string (filename) -> ni ast
+; opens and parses a file and tries to turn it into an ast if possible
+(define (parse-file filename)
+  (let ([in (open-input-file filename)])
+    (build-ast in)))
 
 
 ;Test cases:
