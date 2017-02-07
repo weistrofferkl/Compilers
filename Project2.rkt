@@ -11,13 +11,11 @@
 (struct Peng () #:transparent)
 
 ; var declarations
-;DONE
 (struct VarDecl (type id expr) #:transparent)
 
 ; type declarations--note they can be mutually recursive (using AND)
 ; so our struct has a link to the next one that belongs here, otherwise
 ; it's simply '()
-;DONE
 (struct NameType (name kind next) #:transparent)
 (struct RecordType (name fields next) #:transparent)
 (struct ArrayType (name kind next) #:transparent)
@@ -27,90 +25,68 @@
 ; these consist of the name of the function, the arguments to it,
 ; the return type (which may be #f if it doesn't have one) and the body
 ; finally, next points to the next, related definition (for mutual recursion)
-;DONE, DO RECURSION? -DONE?
 (struct FunDecl (name args rettype body next) #:transparent)
 
 ; things associated with expressions and lvalues
-;DONE
 (struct NumExpr (val) #:transparent)
 
 ; variable expressions
-;DONE
 (struct VarExpr (name) #:transparent)
 
 ; record expressions (name and a list of fields are required)
-;DONE
 (struct RecordExpr (name field) #:transparent)
 
 ; array expressions (name and expression for the index)
-;DONE
 (struct ArrayExpr (name expr) #:transparent)
 
 ; function call which is name and a list of arguments
-;DONE
 (struct FuncallExpr (name args) #:transparent)
 
 ; a string
-;DONE
 (struct StringExpr (str) #:transparent)
 
 ; a noval
-;DONE
 (struct NoVal () #:transparent)
 
 ; a list of declarations for the let and a list of expressions following it
-;DONE
 (struct LetExpr (decs exprs) #:transparent)
 
 ; arithmetic expression
-;DONE
 (struct MathExpr (expr1 op expr2) #:transparent)
 
 ; bool op, i.e., comparision
-;DONE
 (struct BoolExpr (expr1 op expr2) #:transparent)
 
 ; logic op, and or or
-;DONE
 (struct LogicExpr (expr1 op expr2) #:transparent)
 
 ; assignment in a field for creating a record
-;DONE
 (struct FieldAssign (name expr) #:transparent)
 
 ; creating a new record
-;DONE
 (struct NewRecordExpr (name assignments) #:transparent)
 
 ; creating a new array
-;DONE
 (struct NewArrayExpr (name expr kind) #:transparent)
 
 ; an if expression (hint, you may temporarily use an IfElseExpr if you
 ; would like to make it easy to see when you're matching or not
-;DONE?
 (struct IfExpr (test true-branch false-branch) #:transparent)
 
 ; a while expression, which is a test and the body
-;DONE
 (struct WhileExpr (test body) #:transparent)
 
 ; an assignment expression
-;DONE
 (struct AssignmentExpr (name expr) #:transparent)
 
 ; break expression--this has no arguments
-;DONE
 (struct BreakExpr () #:transparent)
+
+;Peng Expression - No Arguements
 (struct PengExpr () #:transparent)
 
 ; with expression (think: for expression)
-;DONE
 (struct WithExpr (idname initexpr fromexpr toexpr) #:transparent)
-
-
-;SEMICOLON
-
 
 (define niparser
   (cfg-parser
@@ -129,12 +105,12 @@
      [(expression program) (cons $1 $2)]
      [(decl program) (cons $1 $2)]
      [(expression) (list $1)]
-     [(decl) $1] ;[(decl) (list $1)]
+     [(decl) $1] 
      )
 
     (decl 
-     [(vDecl) (list $1)] ;[(vDecl) (list $1)]
-     [(TypeDecls) (list $1)] ;[(TypeDecls) (list $1)]
+     [(vDecl) (list $1)] 
+     [(TypeDecls) (list $1)]
      [(vDecl decl) (cons $1 $2)]
      [(TypeDecls decl) (cons $1 $2)]
      [() '()]
@@ -165,7 +141,7 @@
          [(RecordType name fields _)(RecordType name fields $3)]
          [(FunDecl name args rettype body _) (FunDecl name args rettype body $3)])])
      
-    
+   ;Recurisve Record stuff
    (recordRecurse
     [(type ID COMMA recordRecurse) (cons (TypeField $2 $1) $4)]
     [(type ID recordRecurse) (cons (TypeField $2 $1) $3)]
@@ -173,27 +149,32 @@
     [() '()]
     )
 
+   ;Record Parameters
    (recordPars
     [() '()]
     [(ID IS expression COMMA recordPars) (cons (FieldAssign $1 $3) $5)]
     [(ID IS expression) (list (FieldAssign $1 $3))])
 
+   ;Function Parameters
    (functPars
     [() '()]
     [(expression COMMA functPars) (cons $1 $3)]
     [(expression) (list $1)])
 
+   ;Let parameters, handles 0+ things, Semicolon separated
    (letPars
     [() '()]
     [(expression SEMI letPars) (cons $1 $3)]
     [(expression) (list $1)])
 
+   ;Handinlg multiple semicolon stuffs
    (semiExpression
     [() '()]
     [(expression SEMI semiExpression ) (cons $1 $3)]
     [(expression) (list $1)]
     )
 
+   ;Lvalues
    (LValue
     [(ID) (VarExpr $1)]
     ;Record Expression
@@ -206,6 +187,7 @@
      [(ID) $1])
 
     (expression
+     ;Boolean Expressions first
      [(boolExpression) $1])
 
     ;Math Expressions: With Prescidence 
@@ -221,9 +203,10 @@
       [(factor) $1]
       )
     (factor
-     [(simple-expression) $1]
+     [(simple-expression) $1] ; simple-expression
      )
 
+   
 
 
    ;Boolean Expressions
@@ -237,14 +220,21 @@
       [(logicExpression) $1]
       )
 
+  ;Logic Expressions
   (logicExpression
    [(logicExpression BOOLOR logTerm) (LogicExpr $1 'or $3)]
    [(logTerm) $1]
    )
   
+  ;Logic terms
   (logTerm
    [(logTerm BOOLAND mathExpression) (LogicExpr $1 'and $3)]
-   [(mathExpression) $1])
+   [(assExpr) $1])
+
+  ;AssignmentExpressions
+  (assExpr
+      [(NOW LValue IS expression) (AssignmentExpr $2 $4)]
+      [(mathExpression) $1])
     
 
      (simple-expression
@@ -252,8 +242,7 @@
       [(BREAK) (BreakExpr)]
       [(LPAREN RPAREN) (NoVal)]
       [(ID LPAREN functPars RPAREN) (FuncallExpr $1 $3)]
-     ; [(ID) (VarExpr $1)]
-      ;NewArrayExpression
+      ;Array Expresion
       [(ID LBRACKET expression RBRACKET OF expression) (NewArrayExpr $1 $3 $6)]
       [(PENG) (PengExpr)]
       [(STRING) (StringExpr $1)]
@@ -261,28 +250,19 @@
       [(LPAREN semiExpression RPAREN) $2]
       [(LValue) $1]
       [(LPAREN expression SEMI expression RPAREN) (list $2 $4)]
-     
-      ;FunCallExpr
-     ; [(ID LPAREN functPars RPAREN) (FuncallExpr $1 $3)]
-
       ;Let
       [(LET decl IN letPars END) (LetExpr $2 $4)]
-
-      ;FieldAssign
-     ; [(ID IS expression)(FieldAssign $1 $3)]
 
       ;NewRecordExpression
       [(ID LBRACE recordPars RBRACE) (NewRecordExpr $1 $3)]
       ;WithExpr
       [(WITH ID AS expression TO expression DO expression END) (WithExpr $2 $8 $4 $6)]
-      ;IfExpr (struct IfExpr (test true-branch false-branch) #:transparent)
-     [(IF expression THEN expression ELSE expression END) (IfExpr $2 $4 $6)]
-     [(IF expression THEN expression END) (IfExpr $2 $2 $4)]
-      ;AssignmentExpr
-      [(NOW LValue IS expression) (AssignmentExpr $2 $4)]
-      ;WhileExpr
-     ; (struct WhileExpr (test body) #:transparent)
       
+      ;IfExpr (struct IfExpr (test true-branch false-branch) #:transparent)
+      [(IF expression THEN expression ELSE expression END) (IfExpr $2 $4 $6)]
+      [(IF expression THEN expression END) (IfExpr $2 $4 '())]
+
+      ;While Expression
       [(WHILE expression DO expression END) (WhileExpr $2 $4)]
 
       )
@@ -315,8 +295,6 @@
 
 
 ;Test cases:
-;(parse-str "let ni x is 5 in 5; 6; end")
-
 ; var declarations
 (check-expect (parse-str "ni x is 5") (list (VarDecl #f "x" (NumExpr "5"))))
 ; type declarations
@@ -333,8 +311,11 @@
 (check-expect (parse-str "(5)") (list (NumExpr "5")))
 ; various sequences
 (check-expect (parse-str "(6; 5)") (list (list (NumExpr "6") (NumExpr "5"))))
+(check-expect (parse-str "(6; 5 ;8)") (list (list (NumExpr "6") (NumExpr "5") (NumExpr "8"))))
+(check-expect (parse-str "(6; 5;)") (list (list (NumExpr "6") (NumExpr "5"))))
 ; strings
 (check-expect (parse-str "\"Hello World\"") (list (StringExpr "\"Hello World\"")))
+
 ; noval
 (check-expect (parse-str "()") (list (NoVal)))
 ; let expressions
@@ -345,9 +326,11 @@
               (list (MathExpr (NumExpr "1") '+ (NumExpr "2"))))
 ; math ops using negated numbers
 (check-expect (parse-str "-5") (list (MathExpr (NumExpr "0") '- (NumExpr "5"))))
+(check-expect (parse-str "-5 - (-9)") (list (MathExpr (MathExpr (NumExpr "0") '- (NumExpr "5")) '- (MathExpr (NumExpr "0") '- (NumExpr "9")))))
 
 ; bool expressions
 (check-expect (parse-str "5=6") (list (BoolExpr (NumExpr "5") 'eq (NumExpr "6"))))
+(check-expect (parse-str "(5=6)=0") (list (BoolExpr (BoolExpr (NumExpr "5") 'eq (NumExpr "6"))'eq (NumExpr "0"))))
 
 ; array creation
 (check-expect (parse-str "intarr[10] of 6")
@@ -356,4 +339,15 @@
 ; record expression
 (check-expect (parse-str "point { x is 6 }")
               (list (NewRecordExpr "point" (list (FieldAssign "x" (NumExpr "6"))))))
+(check-expect (parse-str "hello {x is 8 ,y is 2}") (list (NewRecordExpr "hello" (list (FieldAssign "x" (NumExpr "8"))
+                                                                                      (FieldAssign "y" (NumExpr "2"))))))
+
+
+(check-expect (parse-str "5-6*3") (list (MathExpr (NumExpr "5") '- (MathExpr (NumExpr "6") '* (NumExpr "3")))))
+(check-expect (parse-str "3*foo()") (list (MathExpr (NumExpr "3") '* (FuncallExpr "foo" '()))))
+
+(check-expect (parse-str "1+ foo() *1") (list (MathExpr (NumExpr "1") '+ (MathExpr (FuncallExpr "foo" '()) '* (NumExpr "1")))))
+
+
+
 (test)
