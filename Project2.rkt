@@ -294,60 +294,60 @@
     (build-ast in)))
 
 
-;Test cases:
-; var declarations
-(check-expect (parse-str "ni x is 5") (list (VarDecl #f "x" (NumExpr "5"))))
-; type declarations
-(check-expect (parse-str "define int2 kind as int") (list (NameType "int2" "int" '())))
-(check-expect (parse-str "define intarr kind as array of int") (list (ArrayType "intarr" "int" '())))
-(check-expect (parse-str "define intrec kind as { int x }")
-              (list (RecordType "intrec" (list (TypeField "x" "int")) '())))
-; function declarations
-(check-expect (parse-str "neewom getX() as int is 5")
-              (list (FunDecl "getX" '() "int" (NumExpr "5") '())))
-; function calls of various sorts
-(check-expect (parse-str "add2(5)") (list (FuncallExpr "add2" (list (NumExpr "5")))))
-; parens
-(check-expect (parse-str "(5)") (list (NumExpr "5")))
-; various sequences
-(check-expect (parse-str "(6; 5)") (list (list (NumExpr "6") (NumExpr "5"))))
-(check-expect (parse-str "(6; 5 ;8)") (list (list (NumExpr "6") (NumExpr "5") (NumExpr "8"))))
-(check-expect (parse-str "(6; 5;)") (list (list (NumExpr "6") (NumExpr "5"))))
-; strings
-(check-expect (parse-str "\"Hello World\"") (list (StringExpr "\"Hello World\"")))
-
-; noval
-(check-expect (parse-str "()") (list (NoVal)))
-; let expressions
-(check-expect (parse-str "let ni x is 5 in x end")
-              (list (LetExpr (list (VarDecl #f "x" (NumExpr "5"))) (list (VarExpr "x")))))
-; math ops
-(check-expect (parse-str "1+2")
-              (list (MathExpr (NumExpr "1") '+ (NumExpr "2"))))
-; math ops using negated numbers
-(check-expect (parse-str "-5") (list (MathExpr (NumExpr "0") '- (NumExpr "5"))))
-(check-expect (parse-str "-5 - (-9)") (list (MathExpr (MathExpr (NumExpr "0") '- (NumExpr "5")) '- (MathExpr (NumExpr "0") '- (NumExpr "9")))))
-
-; bool expressions
-(check-expect (parse-str "5=6") (list (BoolExpr (NumExpr "5") 'eq (NumExpr "6"))))
-(check-expect (parse-str "(5=6)=0") (list (BoolExpr (BoolExpr (NumExpr "5") 'eq (NumExpr "6"))'eq (NumExpr "0"))))
-
-; array creation
-(check-expect (parse-str "intarr[10] of 6")
-              (list (NewArrayExpr "intarr" (NumExpr "10") (NumExpr "6"))))
-
-; record expression
-(check-expect (parse-str "point { x is 6 }")
-              (list (NewRecordExpr "point" (list (FieldAssign "x" (NumExpr "6"))))))
-(check-expect (parse-str "hello {x is 8 ,y is 2}") (list (NewRecordExpr "hello" (list (FieldAssign "x" (NumExpr "8"))
-                                                                                      (FieldAssign "y" (NumExpr "2"))))))
-
-
-(check-expect (parse-str "5-6*3") (list (MathExpr (NumExpr "5") '- (MathExpr (NumExpr "6") '* (NumExpr "3")))))
-(check-expect (parse-str "3*foo()") (list (MathExpr (NumExpr "3") '* (FuncallExpr "foo" '()))))
-
-(check-expect (parse-str "1+ foo() *1") (list (MathExpr (NumExpr "1") '+ (MathExpr (FuncallExpr "foo" '()) '* (NumExpr "1")))))
-
-
-
-(test)
+;;Test cases:
+;; var declarations
+;(check-expect (parse-str "ni x is 5") (list (VarDecl #f "x" (NumExpr "5"))))
+;; type declarations
+;(check-expect (parse-str "define int2 kind as int") (list (NameType "int2" "int" '())))
+;(check-expect (parse-str "define intarr kind as array of int") (list (ArrayType "intarr" "int" '())))
+;(check-expect (parse-str "define intrec kind as { int x }")
+;              (list (RecordType "intrec" (list (TypeField "x" "int")) '())))
+;; function declarations
+;(check-expect (parse-str "neewom getX() as int is 5")
+;              (list (FunDecl "getX" '() "int" (NumExpr "5") '())))
+;; function calls of various sorts
+;(check-expect (parse-str "add2(5)") (list (FuncallExpr "add2" (list (NumExpr "5")))))
+;; parens
+;(check-expect (parse-str "(5)") (list (NumExpr "5")))
+;; various sequences
+;(check-expect (parse-str "(6; 5)") (list (list (NumExpr "6") (NumExpr "5"))))
+;(check-expect (parse-str "(6; 5 ;8)") (list (list (NumExpr "6") (NumExpr "5") (NumExpr "8"))))
+;(check-expect (parse-str "(6; 5;)") (list (list (NumExpr "6") (NumExpr "5"))))
+;; strings
+;(check-expect (parse-str "\"Hello World\"") (list (StringExpr "\"Hello World\"")))
+;
+;; noval
+;(check-expect (parse-str "()") (list (NoVal)))
+;; let expressions
+;(check-expect (parse-str "let ni x is 5 in x end")
+;              (list (LetExpr (list (VarDecl #f "x" (NumExpr "5"))) (list (VarExpr "x")))))
+;; math ops
+;(check-expect (parse-str "1+2")
+;              (list (MathExpr (NumExpr "1") '+ (NumExpr "2"))))
+;; math ops using negated numbers
+;(check-expect (parse-str "-5") (list (MathExpr (NumExpr "0") '- (NumExpr "5"))))
+;(check-expect (parse-str "-5 - (-9)") (list (MathExpr (MathExpr (NumExpr "0") '- (NumExpr "5")) '- (MathExpr (NumExpr "0") '- (NumExpr "9")))))
+;
+;; bool expressions
+;(check-expect (parse-str "5=6") (list (BoolExpr (NumExpr "5") 'eq (NumExpr "6"))))
+;(check-expect (parse-str "(5=6)=0") (list (BoolExpr (BoolExpr (NumExpr "5") 'eq (NumExpr "6"))'eq (NumExpr "0"))))
+;
+;; array creation
+;(check-expect (parse-str "intarr[10] of 6")
+;              (list (NewArrayExpr "intarr" (NumExpr "10") (NumExpr "6"))))
+;
+;; record expression
+;(check-expect (parse-str "point { x is 6 }")
+;              (list (NewRecordExpr "point" (list (FieldAssign "x" (NumExpr "6"))))))
+;(check-expect (parse-str "hello {x is 8 ,y is 2}") (list (NewRecordExpr "hello" (list (FieldAssign "x" (NumExpr "8"))
+;                                                                                      (FieldAssign "y" (NumExpr "2"))))))
+;
+;
+;(check-expect (parse-str "5-6*3") (list (MathExpr (NumExpr "5") '- (MathExpr (NumExpr "6") '* (NumExpr "3")))))
+;(check-expect (parse-str "3*foo()") (list (MathExpr (NumExpr "3") '* (FuncallExpr "foo" '()))))
+;
+;(check-expect (parse-str "1+ foo() *1") (list (MathExpr (NumExpr "1") '+ (MathExpr (FuncallExpr "foo" '()) '* (NumExpr "1")))))
+;
+;
+;
+;(test)
