@@ -26,6 +26,7 @@
 ; in this case, the name is the symbol name of a field, 
 ; and actual will refer to the actual type
 (struct NameTypePair NiType (name) #:transparent)
+(struct BoolType NiType () #:transparent)
 
 
 ;VALUES
@@ -61,8 +62,14 @@
 
 (define (make-IntType)
   (IntType '()))
+(define (make-ArrayType)
+  (ArrayType '()))
+(define (make-VoidType)
+  (VoidType '()))
 (define (make-StringType)
   (StringType '()))
+(define (make-BoolType)
+  (BoolType '()))
 
 (define (get-ast in)
   (lambda ()
@@ -70,10 +77,21 @@
       (typeCheck (first ast)))))
 
 ;Recursive
+;Done: NumExpr, StringExpr, VarExpr, MathExpr, NoVal, VarDecl, LetExpr, 
+;To Do:FunDecl, RecordExpr, ArrayExpr, FunCallExpr, BoolExpr, LogicExpr, FieldAssign, NewRecordExpr, NewArrayExpr, IfExpr, WhileExpr, AssignmentExpr, BreakExpr, PengExpr, WithExpr
 (define (typeCheck ast env)
   (match ast
+    ['() (make-VoidType)]
+    [(list expr) (typeCheck expr env)] ;list with 1 ele, list with more than 1 ele, expr with rest of expr
+                   ;[(eq? (length expr) 1) (typeCheck expr env)]
+                   ;[else (
+    [(cons e1 e2)(begin
+                   (typeCheck e1 env)
+                   (typeCheck e2 env))]
+                   
     [(NumExpr val) (make-IntType)]
     [(StringExpr str) (make-StringType)]
+    [(ArrayExpr name expr) (make-ArrayType)]
     [(VarExpr name) (let ([t1 (apply-env env(string->symbol name))])
                       t1)]
     [(MathExpr e1 op e2) (let ([t1 (typeCheck e1 env)]
@@ -81,6 +99,15 @@
                            (if (and (IntType? t1) (IntType? t2))
                                (make-IntType)
                                (error "Type Mismatch")))]
+    [(BoolExpr e1 op e2) (let ([t1 (typeCheck e1 env)]
+                               [t2 (typeCheck e2 env)])
+                           (cond
+                             [(and (IntType? t1) (IntType? t2)) (make-BoolType)]
+                             [(and(and (RecordType? t1) (RecordType t2)) (or (eq? op '<>) (eq? op '=))) (make-BoolType)]
+                             [(and(and (ArrayType? t1) (ArrayType t2)) (or (eq? op '<>) (eq? op '=))) (make-BoolType)]
+                             [else (error "TYPEEEEEE")]))]
+                             
+                               
     [(NoVal) (VoidType)]
     [(VarDecl type id expr) (let ([t1 (typeCheck expr env)])
                               (cond
@@ -88,6 +115,11 @@
                                 [(equal?(apply-env env (string->symbol type)) t1)
                                  (extend-env env (string->symbol id) t1)]
                                 [else (error "Type Msmatch!!!")]))]
+    [(LetExpr decls exprs) (let ([env1 (push-scope env)])
+                             (typeCheck decls env1)
+                             (typeCheck exprs env1))]
+                             
+                     
     [_ (error "Node not implemented yet!")]
     
     ))
