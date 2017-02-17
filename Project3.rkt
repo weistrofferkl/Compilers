@@ -6,27 +6,31 @@
 (provide (all-defined-out))
 
 
+
 ;TYPES
 
+; types for Ni
 (struct NiType (actual) #:transparent
-  #:guard (λ (actual typename)
-            (if (equal? typename 'NiType)
-                (error "Can't instantiate NiType Directly")
-                (if (or (eq? actual '())
-                        (NiType? actual)) (values actual)
-                                          (error "Can only instantiate with NiTypes or '()")))))
+ #:guard (λ (actual typename)
+            (if (eq? typename 'NiType)
+                (error "Can't instantiate NiType directly.")
+                (if (or (eq? actual '()) (NiType? actual)) 
+                    (values actual)
+                    (error "Can only instantiate with NiTypes or '()")))))
                 
 
 (struct StringType NiType () #:transparent)
 (struct VoidType NiType () #:transparent)
 (struct IntType NiType () #:transparent)
+(struct NameType NiType () #:transparent)
+(struct BoolType NiType () #:transparent)
+(struct PengType NiType () #:transparent)
 (struct ArrayType NiType (element-type) #:transparent)
 ; for records, we need two structs
 (struct RecordType NiType (fields) #:transparent)
 ; in this case, the name is the symbol name of a field, 
 ; and actual will refer to the actual type
 (struct NameTypePair NiType (name) #:transparent)
-(struct BoolType NiType () #:transparent)
 
 
 ;VALUES
@@ -62,14 +66,16 @@
 
 (define (make-IntType)
   (IntType '()))
-(define (make-ArrayType)
-  (ArrayType '()))
+(define (make-ArrayType expr)
+  (ArrayType '() expr))
 (define (make-VoidType)
   (VoidType '()))
 (define (make-StringType)
   (StringType '()))
 (define (make-BoolType)
   (BoolType '()))
+(define (make-RecordType fields)
+  (RecordType '() fields))
 
 (define (get-ast in)
   (lambda ()
@@ -77,28 +83,42 @@
       (typeCheck (first ast)))))
 
 ;Recursive
-;Done: NumExpr, StringExpr, VarExpr, MathExpr, NoVal, VarDecl, LetExpr, 
-;To Do:FunDecl, RecordExpr, ArrayExpr, FunCallExpr, BoolExpr, LogicExpr, FieldAssign, NewRecordExpr, NewArrayExpr, IfExpr, WhileExpr, AssignmentExpr, BreakExpr, PengExpr, WithExpr
+;Done: NumExpr, StringExpr, VarExpr, MathExpr, NoVal, VarDecl, LetExpr,
+;To Do: FunDecl, ArrayExpr, RecordExpr, FunCallExpr, BoolExpr, LogicExpr, FieldAssign, NewRecordExpr, NewArrayExpr, IfExpr, WhileExpr, AssignmentExpr, BreakExpr, PengExpr, WithExpr
 (define (typeCheck ast env)
   (match ast
     ['() (make-VoidType)]
-    [(list expr) (typeCheck expr env)] ;list with 1 ele, list with more than 1 ele, expr with rest of expr
-                   ;[(eq? (length expr) 1) (typeCheck expr env)]
-                   ;[else (
+    ;List with one element, List with 1+ element
+    [(list expr) (typeCheck expr env)] 
     [(cons e1 e2)(begin
                    (typeCheck e1 env)
                    (typeCheck e2 env))]
-                   
+
+    [(NameType name kind next) (let ([nameSym (string->symbol name)])
+                                 (extend-env env nameSym (actual-type(apply-env env kind))))]
+
+    ;Numbers
     [(NumExpr val) (make-IntType)]
+    ;No Value
+    [(NoVal) (VoidType)]
+    ;Strings
     [(StringExpr str) (make-StringType)]
-    [(ArrayExpr name expr) (make-ArrayType)]
+    ;Array Expression:
+    [(ArrayExpr name expr) (make-ArrayType expr)]
+    ;Record Expression:
+    [(RecordExpr name field) (make-RecordType field)]
+    ;Variable Expression:
     [(VarExpr name) (let ([t1 (apply-env env(string->symbol name))])
                       t1)]
+
+    ;Math Expressions:
     [(MathExpr e1 op e2) (let ([t1 (typeCheck e1 env)]
                                [t2 (typeCheck e2 env)])
                            (if (and (IntType? t1) (IntType? t2))
                                (make-IntType)
                                (error "Type Mismatch")))]
+
+    ;Boolean Expressions:
     [(BoolExpr e1 op e2) (let ([t1 (typeCheck e1 env)]
                                [t2 (typeCheck e2 env)])
                            (cond
@@ -108,13 +128,15 @@
                              [else (error "TYPEEEEEE")]))]
                              
                                
-    [(NoVal) (VoidType)]
+    ;Variable Declaration: 
     [(VarDecl type id expr) (let ([t1 (typeCheck expr env)])
                               (cond
                                 [(eq? type #f)(extend-env env (string->symbol id) t1)]
                                 [(equal?(apply-env env (string->symbol type)) t1)
                                  (extend-env env (string->symbol id) t1)]
                                 [else (error "Type Msmatch!!!")]))]
+
+    ;Let Expressions
     [(LetExpr decls exprs) (let ([env1 (push-scope env)])
                              (typeCheck decls env1)
                              (typeCheck exprs env1))]
