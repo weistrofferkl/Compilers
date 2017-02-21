@@ -22,12 +22,13 @@
 
 
 ;Recursive
-;Done: NumExpr, StringExpr, VarExpr, MathExpr, NoVal, VarDecl, LetExpr, NameType, RecordType, ArrayType
-;In Progress/NotSure: BoolExpr, LogicExpr,RecordExpr (dot notation)???, ArrayExpr (bracket access)???, BreakExpr?????, FunDecl, AssignmentExpr????, IfExpr?
+;Done: NumExpr, StringExpr, VarExpr, MathExpr, NoVal, VarDecl, LetExpr, NameType, RecordType, ArrayType, BoolExpr, LogicExpr, AssignmentExpr, IfExpr, BreakExpr
+;In Progress/NotSure: RecordExpr (dot notation), ArrayExpr (bracket access), FunDecl
 ;To Do: FunCallExpr, FieldAssign, NewRecordExpr, NewArrayExpr, WhileExpr, PengExpr, WithExpr
 (define (typeCheck ast env)
   (match ast
     ['() (types:make-VoidType)]
+    [(BreakExpr) (types:make-VoidType)]
     ;List with one element, List with 1+ element
     [(list expr) (typeCheck expr env)] 
     [(cons e1 e2)(begin
@@ -40,7 +41,7 @@
                                  (extend-env env nameSym (types:actual-type(apply-env env (string->symbol kind)))))]
     ;RecordType
     [(RecordType name fields next) (let ([nameSym (string->symbol name)])
-                                     (extend-env env nameSym (types:make-RecordType (nameFields fields env))))]
+                                     (extend-env env nameSym (types:make-RecordType (nameFields fields env))))] 
                  
     ;ArrayType
     [(ArrayType name kind next) (let ([nameSym (string->symbol name)])
@@ -80,14 +81,14 @@
     [(LogicExpr e1 op e2) (let ([t1 (typeCheck e1 env)]
                                 [t2 (typeCheck e2 env)])
                             (cond
-                              [(and (types:BoolType? t1) (types:BoolType? t2))] ;(types:make-LogicType) ????
+                              [(and (types:BoolType? t1) (types:BoolType? t2))(types:make-BoolType)] 
                               [else (error "Logic Type not Compatable")]))]
 
     ;Assignment Expression:
     [(AssignmentExpr name expr) (let ([t1 (apply-env env (string->symbol name))]
                                       [t2 (typeCheck expr env)])
                                   (cond
-                                    [(eq? t1 t2)]
+                                    [(equal? t1 t2) (types:make-VoidType)]
                                     [else (error "AssignmentExpression Suckssssss")]))]
                                   
                                       
@@ -101,19 +102,20 @@
                                
     ;Variable Declaration: 
     [(VarDecl type id expr) (let ([t1 (typeCheck expr env)])
-                              (cond
+                              (cond ;Chris said this was wrong even though we did it in class types:VarValue
                                 [(eq? type #f)(extend-env env (string->symbol id) t1)]
                                 [(equal?(apply-env env (string->symbol type)) t1)
                                  (extend-env env (string->symbol id) t1)]
                                 
-                                [else (error "Type Msmatch!!!")]))]
+                                [else (error "Type Mismatch in VarDecl!!!")]))]
 
     ;Function Declaration:
-    [(FunDecl name args rettype body next) (let ([nameFunc (typeCheck name env)]
+    [(FunDecl name args rettype body next) (let ([bodyType (typeCheck body env)]
                                                  [returnTy (typeCheck rettype env)])
-                                             (cond
-                                               [(eq? name #f) (extend-env (string->symbol name) nameFunc)]))]
-                                               ;check if return type of Function matches what is actually being returned?
+                                             (cond ;Chris said there was something else to do here in regards to the body
+                                               [(equal? bodyType returnTy) (extend-env env (types:FunValue (nameFields args env) returnTy))]
+                                               [else (error "Body and return type not equal")]))]
+                                               
 
     ;Let Expressions
     [(LetExpr decls exprs) (let ([env1 (push-scope env)])
@@ -126,8 +128,7 @@
                                                       [t2 (typeCheck true-branch env)]
                                                       [t3 (typeCheck false-branch env)])
                                                   (cond
-                                                    [(types:BoolType? testExpr)]
-                                                    [(or (eq? t2 t3) (eq? t3 '()))] ;ask if this must return anything
+                                                    [(and (types:BoolType? t1) (equal? t2 t3)) t2]
                                                     [else (error "If Thing Errorssss")]))]
                              
                      
