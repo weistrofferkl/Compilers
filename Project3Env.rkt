@@ -14,7 +14,7 @@
 ; apply the given environment with the symbol and return its value
 (define (apply-env env sym)
   (cond ;Add base case
-    [(eq? env '()) #f]
+    [(eq? env '()) (error "Env issue")]
     [(hash-has-key? (first env) sym) (hash-ref (first env) sym)]
     [else (apply-env (rest env) sym)]))
     

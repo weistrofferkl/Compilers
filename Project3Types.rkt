@@ -58,13 +58,10 @@
 (define (make-PengType)
   (PengType '()))
 (define (make-NameType fieldName)
-  (NameType '()))
+  (NameType '() fieldName))
 
 ;VALUES
 (struct VarValue (type) #:transparent)
 ; as with records, we need something for parameters,
 ; so this will be stored as a list of NameTypePair structs
 (struct FunValue (parameters return-type) #:transparent)
-
-  
-
