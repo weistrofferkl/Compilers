@@ -23,7 +23,7 @@
 (define (findit item lst)
   (cond
     [(null? lst) #f]
-    [(equal? item (first lst)) (first lst)]
+    [(equal? item (types:NameTypePair-name (first lst))) (first lst)]
     [else (findit item (rest lst))]))
 
 (define (recordSearch assignments env recTy recTyFields)
@@ -36,13 +36,15 @@
                  (equal? (typeCheck (FieldAssign-expr(first assignments)) env) (types:NiType-actual (first recTyFields))))
 
              (recordSearch (rest assignments) env recTy (rest recTyFields))]))
+
 ;Done: NumExpr, StringExpr, VarExpr, MathExpr, NoVal, VarDecl, LetExpr, NameType, RecordType, ArrayType, BoolExpr, LogicExpr, AssignmentExpr, IfExpr, BreakExpr, WhileExpr,WithExpr, RecordExpr (dot notation),FieldAssign, NewRecordExpr
 ;In Progress/NotSure: ArrayExpr (bracket access), FunDecl, FunCallExpr, NewArrayExpr, PengExpr(null)
-;To Do: 
+;To Do: Mutual Recursion, Break only in With/While
 
 
 ;Recursive
 (define (typeCheck ast env)
+  ;(printf "typeCheck with ~a~n~n" (object-name ast))
   (match ast
     ;Empty List --> VoidType
     ['() (types:make-VoidType)]
@@ -77,15 +79,28 @@
     ;Array Expression (Creation):
     [(ArrayExpr name expr) (types:make-ArrayType expr)]
     ;Record Expression (Creation):
-    [(RecordExpr name field) (types:make-RecordType field)]
+    ;[(RecordExpr name field) (types:make-RecordType field)]
+     ;Record Expressions (Dot Notation):
+    ;Check if Record name is a record
+    ;Check if field is declared as legit in that record --> return that field's return type
+    
+    [(RecordExpr name field) (let* ([nameRec (typeCheck name env)]
+                                 
+                                   [recField (findit (string->symbol field) (types:RecordType-fields nameRec))])
+                             ;  (printf "namerec: ~a~n recField: ~a~n" nameRec recField)
+                             (cond
+                               [(and(types:RecordType? nameRec) (not(equal? recField #f))) (types:NiType-actual recField)]
+                               [else (error "Not a valid Record")]))]
+                             
+                               
     ;Variable Expression:
     [(VarExpr name) (let ([t1 (apply-env env(string->symbol name))])
-                      t1)]
+                      (types:VarValue-type t1))]
 
     ;Math Expressions:
     [(MathExpr e1 op e2) (let ([t1 (typeCheck e1 env)]
                                [t2 (typeCheck e2 env)])
-                           (printf "~n~nt1 and t2 ~a~a~n" t1 t2)
+                           ;(printf "~n~ne1 and e2 ~a~a~n" e1 e2)
                            (if (and (types:IntType? t1) (types:IntType? t2))
                                (types:make-IntType)
                                (error "Type Mismatch in MathExpression")))]
@@ -131,19 +146,19 @@
                                   
                                       
 
-    ;Record Expressions (Dot Notation):
-    ;Check if Record name is a record
-    ;Check if field is declared as legit in that record --> return that field's return type
-    
-    [(RecordExpr name field) (let* ([nameRec (typeCheck name env)]
-                                 
-                                   [recField (findit field (types:RecordType-fields nameRec))])
-                               (printf "namerec: ~a~n recField: ~a~n" nameRec recField)
-                             (cond
-                               [(and(types:RecordType? nameRec) (not(equal? recField #f))) (types:NiType-actual recField)]
-                               [else (error "Not a valid Record")]))]
-                             
-                               
+;    ;Record Expressions (Dot Notation):
+;    ;Check if Record name is a record
+;    ;Check if field is declared as legit in that record --> return that field's return type
+;    
+;    [(RecordExpr name field) (let* ([nameRec (typeCheck name env)]
+;                                 
+;                                   [recField (findit field (types:RecordType-fields nameRec))])
+;                               (printf "namerec: ~a~n recField: ~a~n" nameRec recField)
+;                             (cond
+;                               [(and(types:RecordType? nameRec) (not(equal? recField #f))) (types:NiType-actual recField)]
+;                               [else (error "Not a valid Record")]))]
+;                             
+;                               
     ;Variable Declaration: 
 ;    [(VarDecl type id expr) (let ([t1 (typeCheck expr env)])
 ;                              (cond ;Chris said this was wrong even though we did it in class types:VarValue
@@ -159,7 +174,7 @@
                                 [(and (eq? type #f) (not (types:PengType? t1))) (extend-env env (string->symbol id) (types:VarValue t1))]
                                 [(equal? (apply-env env (string->symbol type)) t1)
                                  (begin
-                                   (printf "BeforeExt: ~a~n" (apply-env env (string->symbol type)))
+                               ;    (printf "BeforeExt: ~a~n" (apply-env env (string->symbol type)))
                                  (extend-env env (string->symbol id) (types:VarValue t1)))]
                                 [(and (types:RecordType? (apply-env env (string->symbol type)))  (types:PengType? t1)) (types:make-VoidType)]
                                 
