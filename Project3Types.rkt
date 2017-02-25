@@ -4,7 +4,7 @@
 ;TYPES
 
 ; types for Ni
-(struct NiType (actual) #:transparent
+(struct NiType ([actual #:mutable]) #:transparent
  #:guard (λ (actual typename)
             (if (eq? typename 'NiType)
                 (error "Can't instantiate NiType directly.")
@@ -58,7 +58,7 @@
 (define (make-PengType)
   (PengType '()))
 (define (make-NameType fieldName)
-  (NameType '() fieldName))
+  (NameType fieldName))
 
 ;VALUES
 (struct VarValue (type) #:transparent)
