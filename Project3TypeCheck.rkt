@@ -150,6 +150,9 @@
 ;In Progress/NotSure: ArrayExpr (bracket access), NewArrayExpr, PengExpr(null),  Mutual Recursion, 
 ;To Do:Break only in With/While
 
+;5 commented out Check-expects = All related to arrays
+;Tricky Error Cases Chris said not to worry about until later
+
 
 ;Mutual Recursion (names/arrays/records/functions)
 ;types and functions: modified for-each
@@ -257,11 +260,15 @@
                               [else (error "Logic Type not Compatable")]))]
 
     ;Assignment Expression:
-    [(AssignmentExpr name expr) (let ([t1 (apply-env env (string->symbol name))]
-                                      [t2 (typeCheck expr env)])
-                                  (cond
-                                    [(equal? t1 t2) (types:make-VoidType)]
-                                    [else (error "AssignmentExpression Suckssssss")]))]
+    [(AssignmentExpr name expr)
+     ;(printf "name ~a~n" )
+     (let ([t1 (typeCheck name env)] ;(apply-env env (string->symbol name))
+           [t2 (typeCheck expr env)])
+       (printf "name ~a~n" t1)
+       (printf "t2 ~a~n" t2)
+       (cond
+         [(equal? t1 t2) (types:make-VoidType)]
+         [else (error "AssignmentExpression Suckssssss")]))]
 
     ;New Record Expressions
     [(NewRecordExpr name assignments) (let ([recName (apply-env env (string->symbol name))])
@@ -313,8 +320,9 @@
     [(WithExpr name init from to) (let ([expr1 (typeCheck from env)]
                                         [expr2 (typeCheck to env)]
                                         [expr3 (typeCheck init env)])
+                                      (printf "expr3: ~a~n" expr3)
                                     (cond
-                                      [(and (and (types:IntType? expr1) (types:IntType? expr2))(types:VoidType expr3)) (types:make-VoidType)]
+                                      [(and (and (types:IntType? expr1) (types:IntType? expr2))(types:VoidType? expr3)) (types:make-VoidType)]
                                       [else (error "WithExpression Error")]))]
 
     ;FunCall Expression:
@@ -374,12 +382,23 @@
 (check-expect (tc-str "let ni x is 5 in x end") (types:make-IntType))
 (check-expect (tc-str "let define itype kind as int
 ni itype x is 5 in x end") (types:make-IntType))
+
+;Peng
+(check-expect (tc-str "peng") (types:make-PengType))
 ; simple records
 (check-expect (tc-str
 "let
   define empty kind as {}
   ni e is empty {}
 in end") (types:make-VoidType))
+
+; record starting off null
+(check-expect (tc-str
+"let
+  define empty kind as {}
+  ni empty e is peng
+in
+end") (types:make-VoidType))
 ; record with 1 field
 (check-expect (tc-str "
 let
@@ -405,7 +424,7 @@ let
   ni point p is point { x is 5, y is \"hello\" }
 in p.y end") (types:make-StringType))
 
-; record with 2 fields, but accessing the 2nd kind
+; record with 2 fields, but accessing the 2nd kind incorrectly
 (check-error (tc-str "
 let
   define point kind as { int x, string y }
@@ -433,53 +452,53 @@ in d.p.x + 5 end") (types:make-IntType))
 ; they're pointing to a type in a higher scope 
 ;-- you can comment out until the array section to test these later
 ;;;;
-(check-error (tc-str "
-let
-  define e kind as { int x }
-  ni e x is e { x is 7 }
-in
-  x
-end"))
-(check-error (tc-str "
-let
-  define color kind as { int r, int g, int b }
-  define point kind as { int x, int y, int z }
-  define dot kind as { point p, color c }
-  ni dot d is dot { p is point { x is 1, y is 2, z is 3 }, c is color { r is 1, g is 1, b is 1 } }
-in d.p end"))
-(check-expect (tc-str "
-let
-  define color kind as { int r, int g, int b }
-  ni color col is 
-    let
-      define point kind as { int x, int y, int z }
-    in
-      let
-         define dot kind as { point p, color c }
-         ni dot d is dot { p is point { x is 1, y is 2, z is 3 }, c is color { r is 1, g is 1, b is 1 } }
-      in
-        d.c
-      end
-    end
-in
-  col.g
-end") (types:make-IntType))
+;(check-error (tc-str "
+;let
+;  define e kind as { int x }
+;  ni e x is e { x is 7 }
+;in
+;  x
+;end"))
+;(check-error (tc-str "
+;let
+;  define color kind as { int r, int g, int b }
+;  define point kind as { int x, int y, int z }
+;  define dot kind as { point p, color c }
+;  ni dot d is dot { p is point { x is 1, y is 2, z is 3 }, c is color { r is 1, g is 1, b is 1 } }
+;in d.p end"))
+;(check-expect (tc-str "
+;let
+;  define color kind as { int r, int g, int b }
+;  ni color col is 
+;    let
+;      define point kind as { int x, int y, int z }
+;    in
+;      let
+;         define dot kind as { point p, color c }
+;         ni dot d is dot { p is point { x is 1, y is 2, z is 3 }, c is color { r is 1, g is 1, b is 1 } }
+;      in
+;        d.c
+;      end
+;    end
+;in
+;  col.g
+;end") (types:make-IntType))
 
-(check-error (tc-str "
-let
-  define color kind as { int r, int g, int b }
-in
-  let
-    define point kind as { int x, int y, int z }
-  in
-    let
-       define dot kind as { point p, color c }
-       ni dot d is dot { p is point { x is 1, y is 2, z is 3 }, c is color { r is 1, g is 1, b is 1 } }
-    in
-      d.c
-    end
-  end
-end"))
+;(check-error (tc-str "
+;let
+;  define color kind as { int r, int g, int b }
+;in
+;  let
+;    define point kind as { int x, int y, int z }
+;  in
+;    let
+;       define dot kind as { point p, color c }
+;       ni dot d is dot { p is point { x is 1, y is 2, z is 3 }, c is color { r is 1, g is 1, b is 1 } }
+;    in
+;      d.c
+;    end
+;  end
+;end"))
 
 (check-expect (tc-str "
 let
@@ -506,45 +525,87 @@ let
 	define arrtype kind as array of int
 in
 end") (types:make-VoidType))
-; now a variable declaration with an array type
-(check-expect (tc-str "
-let
-  define arrtype kind as array of int
-  ni a is arrtype[5] of 0
-in
-end") (types:make-VoidType))
+; now a assignment with an array type
+;(check-expect (tc-str "
+;let
+;  define arrtype kind as array of int
+;  ni a is arrtype[5] of 0
+;in
+;end") (types:make-VoidType))
 ; and one where we specify the type
-(check-expect (tc-str "
-let
-  define arrtype kind as array of int
-  ni arrtype a is arrtype[5] of 0
-in
-end") (types:make-VoidType))
+;(check-expect (tc-str "
+;let
+;  define arrtype kind as array of int
+;  ni arrtype a is arrtype[5] of 0
+;in
+;end") (types:make-VoidType))
 ; and subscript access
-(check-expect (tc-str "
-let
-  define arrtype kind as array of int
-  ni arrtype a is arrtype[5] of 0
-in
-  a[1]
-end") (types:make-IntType))
+;(check-expect (tc-str "
+;let
+;  define arrtype kind as array of int
+;  ni arrtype a is arrtype[5] of 0
+;in
+;  a[1]
+;end") (types:make-IntType))
 
 ; branches
 (check-expect (tc-str "if true then true else true end") (types:make-BoolType))
 (check-error (tc-str "if true then true end"))
 (check-expect (tc-str "if true then () end") (types:make-VoidType))
 
+; assignments, begin with simple var assign
+(check-expect (tc-str "let ni x is 5 in now x is 6 end") (types:make-VoidType))
+; bad assignment
+(check-error (tc-str "let ni x is 5 in now x is \"hi\" end"))
+; record expression assign
+(check-expect (tc-str "let define p kind as { int v } ni p x is p { v is 5 } in now x.v is 6 end") (types:make-VoidType))
+; array assign
+;(check-expect (tc-str "let define i kind as array of int ni iarr is i[10] of 0 in now iarr[2] is 12 end") (types:make-VoidType))
+; assign peng
+;(check-expect (tc-str "let define no kind as { } ni x is no {} in now x is peng end") (types:make-VoidType))
+; record assign
+(check-expect (tc-str "let define p kind as { int v } ni p x is p { v is 5 } in now x is p { v is 7 } end") (types:make-VoidType))
+
 ; while loops
+(check-expect (tc-str "
+let
+  ni i is 0
+in
+  while (i < 10) do
+    now i is i + 1
+  end
+end") (types:make-VoidType))
+; while bodies must return no value
+(check-error (tc-str "
+let
+  ni i is 0
+in
+  while (i < 10) do
+    (now i is i + 1; 5)
+  end
+end"))
 
-; with loops
-
-
+; with loops, simple first
+(check-expect (tc-str "with i as 0 to 10 do () end") (types:make-VoidType))
+; with loop bodies can't return values
+(check-error (tc-str "with i as 0 to 10 do 5 end"))
+; with loop cannot assign to declared variable from loop
+(check-error (tc-str "with i as 0 to 10 do now i is 0 end"))
 ; functions
 (check-expect (tc-str "
 let
   neewom nothing() is ()
 in
 end") (types:make-VoidType))
+
+; simple function call
+(check-expect (tc-str "
+let
+  neewom nothing() is ()
+in
+  nothing()
+end") (types:make-VoidType))
+
 
 ; sort of mutually recursive, at least the logic should execute
 (check-expect (tc-str "
@@ -554,5 +615,32 @@ let
  in
 end") (types:make-VoidType))
 
+; mutually recursive
+(check-expect (tc-str "
+let
+  neewom odd(int x) as bool is
+    if (2 * (x / 2)) = x then false else true end 
+  and neewom even(int x) as bool is
+    if (odd(x)) then false else true end
+in
+  odd(5)
+end") (types:make-BoolType))
+
+; multiple args
+(check-expect (tc-str "
+let
+  define point kind as { int x, int y }
+  neewom make-point(int x, int y) as int is
+    let
+      ni x is point { x is x, y is y }
+    in
+      x.y
+    end
+in
+  make-point(1, 2)
+end") (types:make-IntType))
+
+
+;DO MONSTER CHECK-EXPECT AT END HERE!!!!!!
 
 (test)
