@@ -44,13 +44,6 @@
 
              (recordSearch (rest assignments) env recTy (rest recTyFields))]))
 
-;if so, extend env. with that array with "expr" elements, and have that kind assigned to each element
-
-;(define (arrSearch name expr kind env)
- ; (cond
-  ;  [(equal? expr 0) kind]
-   ; [(extend-env env 
-
 (define (funSearch pars env funTy funTyFields)
   (cond
     [(and(null? pars) (null? funTyFields)) (types:FunValue-return-type funTy)]
@@ -94,13 +87,12 @@
     )))
 
 ;(define (funForEach funct decl)
-;(if (empty? decl) '()
- ;   (begin
-  ;    (funct decl)
-   ;   [(FunDecl name args rettype body next) (funForEach funct (FunDecl-next decl))]
-    ;  )))
+ ; (if (empty? decl) '()
+  ;  (begin
+   ;   (funct decl)
+    ;  [(FunDecl name args rettype body next) (funForEach funct (FunDecl-next decl))]
+     ; )))
 
-;(extend-env env nameSym (types:actual-type(apply-env env (string->symbol kind)))))]
 (define (typeCheckTD decl env)
   (modForEach (lambda (type)
                 (match type
@@ -153,17 +145,13 @@
   (let ([nameSym (string->symbol name)])
     (extend-env env nameSym (types:actual-type(apply-env env (string->symbol kind))))))
   
-  
-                 
-  
-       
-        
+
 
 ;Done: NumExpr, StringExpr, VarExpr, MathExpr, NoVal, VarDecl, LetExpr, NameType, RecordType, ArrayType,
 ;BoolExpr, LogicExpr, AssignmentExpr, IfExpr, BreakExpr, WhileExpr,WithExpr, RecordExpr (dot notation),
 ;NewRecordExpr,FieldAssign, FunDecl, FunCallExpr, ArrayExpr (bracket access), NewArrayExpr,
 
-;In Progress/NotSure:  PengExpr(null),  Mutual Recursion,
+;In Progress/NotSure: PengExpr(null), Mutual Recursion (Functions)
 
 ;To Do:Break only in With/While
 
@@ -245,7 +233,7 @@
                                
     ;Variable Expression:
     [(VarExpr name) (let ([t1 (apply-env env(string->symbol name))])
-                      (printf "~n~n~a" 'name)
+                      (printf "VAR~n~n~a" name)
                       (cond
                         
                         [(equal? name "true") (types:make-BoolType)]
@@ -263,13 +251,18 @@
     ;Boolean Expressions:
     [(BoolExpr e1 op e2) (let ([t1 (typeCheck e1 env)]
                                [t2 (typeCheck e2 env)])
-                            (printf "~n~ne1 and e2 ~a~a~n" e1 e2)
+                            ;(printf "~n~n t1 and t2 ~a~a~n" t1 t2)
+                            ;(printf "~a" )
                            (cond
-                            
+                             [(and (and  (types:BoolType? t1) (types:BoolType? t2)) (or (eq? op 'ne) (eq? op 'eq))) (types:make-BoolType)]
                              [(and (types:StringType? t1) (types:StringType? t2))(types:make-BoolType)]
                              [(and (types:IntType? t1) (types:IntType? t2)) (types:make-BoolType)]
-                             [(and(and (types:RecordType? t1) (types:RecordType t2)) (or (eq? op '<>) (eq? op '=))) (types:make-BoolType)]
-                             [(and(and (types:ArrayType? t1) (types:ArrayType t2)) (or (eq? op '<>) (eq? op '=))) (types:make-BoolType)]
+                             [(and(and (types:RecordType? t1) (types:RecordType? t2)) (or (eq? op 'ne) (eq? op 'eq))) (types:make-BoolType)]
+                             [(and(and (or (types:RecordType? t1) (types:PengType? t1)) (types:RecordType? t2)) (or (eq? op 'ne) (eq? op 'eq))) (types:make-BoolType)]
+                             [(and(and (types:RecordType? t1) (or (types:RecordType? t2) (types:PengType? t2))) (or (eq? op 'ne) (eq? op 'eq))) (types:make-BoolType)]
+                             
+                             [(and(and (types:ArrayType? t1) (types:ArrayType t2)) (or (eq? op 'ne) (eq? op 'eq))) (types:make-BoolType)]
+                             
                              [else (error "TYPEEEEEE issue in le Bools")]))]
 
     ;Logic Expressions:
@@ -489,6 +482,7 @@ in d.p.x + 5 end") (types:make-IntType))
 ; they're pointing to a type in a higher scope 
 ;-- you can comment out until the array section to test these later
 ;;;;
+
 ;(check-error (tc-str "
 ;let
 ;  define e kind as { int x }
@@ -681,45 +675,45 @@ end") (types:make-IntType))
 
 ;DO MONSTER CHECK-EXPECT AT END HERE!!!!!!
 
-(check-expect (tc-str "
-let
-  ni N is 9
-
-  define intArray kind as array of int
-
-  ni row is intArray [ N ] of 0
-  ni col is intArray [ N ] of 0
-  ni diag1 is intArray [ N + N - 1] of 0
-  ni diag2 is intArray [ N + N - 1] of 0
-
-  neewom printboard () is 
-    (with i as 0 to N - 1 do
-      (with j as 0 to N - 1 do
-        print(if col[i] = j then \" 0\" else \" .\" end)
-       end;
-       print(\"\n\"))
-     end;
-     print(\"\n\"))
-
-  neewom try (int c) is
-    if c = N - 1
-    then printboard()
-    else with r as 0 to N - 1 do
-              if row[r] = 0 & diag1[r + c] = 0 & diag2[r + 7 - c] = 0 
-              then (now row[r] is 1;
-                    now diag1[r + c] is 1;
-                    now diag2[r + 7 - c] is 1;
-                    now col[c] is r;
-                    try(c + 1);
-                    now row[r] is 0;
-                    now diag1[r + c] is 0;
-                    now diag2[r + 7 - c] is 0)
-              end
-         end
-    end
-  in
-    try(0)
-end
-") (types:make-VoidType))
+;(check-expect (tc-str "
+;let
+;  ni N is 9
+;
+;  define intArray kind as array of int
+;
+;  ni row is intArray [ N ] of 0
+;  ni col is intArray [ N ] of 0
+;  ni diag1 is intArray [ N + N - 1] of 0
+;  ni diag2 is intArray [ N + N - 1] of 0
+;
+;  neewom printboard () is 
+;    (with i as 0 to N - 1 do
+;      (with j as 0 to N - 1 do
+;        print(if col[i] = j then \" 0\" else \" .\" end)
+;       end;
+;       print(\"\n\"))
+;     end;
+;     print(\"\n\"))
+;
+;  neewom try (int c) is
+;    if c = N - 1
+;    then printboard()
+;    else with r as 0 to N - 1 do
+;              if row[r] = 0 & diag1[r + c] = 0 & diag2[r + 7 - c] = 0 
+;              then (now row[r] is 1;
+;                    now diag1[r + c] is 1;
+;                    now diag2[r + 7 - c] is 1;
+;                    now col[c] is r;
+;                    try(c + 1);
+;                    now row[r] is 0;
+;                    now diag1[r + c] is 0;
+;                    now diag2[r + 7 - c] is 0)
+;              end
+;         end
+;    end
+;  in
+;    try(0)
+;end
+;") (types:make-VoidType))
 
 (test)
