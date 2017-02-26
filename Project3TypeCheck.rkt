@@ -27,6 +27,12 @@
     [(equal? item (types:NameTypePair-name (first lst))) (first lst)]
     [else (findit item (rest lst))]))
 
+;;(define (finditAr item arrKind)
+;  (cond
+;    [(null? lst) #f]
+;    [(equal? item (types:NameTypePair-name (first lst))) (first lst)]
+;    [else (findit item (rest lst))]))
+
 (define (recordSearch assignments env recTy recTyFields)
   (cond
     [(and(null? assignments) (null? recTyFields)) recTy]
@@ -37,6 +43,13 @@
                  (equal? (typeCheck (FieldAssign-expr(first assignments)) env) (types:NiType-actual (first recTyFields))))
 
              (recordSearch (rest assignments) env recTy (rest recTyFields))]))
+
+;if so, extend env. with that array with "expr" elements, and have that kind assigned to each element
+
+;(define (arrSearch name expr kind env)
+ ; (cond
+  ;  [(equal? expr 0) kind]
+   ; [(extend-env env 
 
 (define (funSearch pars env funTy funTyFields)
   (cond
@@ -146,12 +159,17 @@
        
         
 
-;Done: NumExpr, StringExpr, VarExpr, MathExpr, NoVal, VarDecl, LetExpr, NameType, RecordType, ArrayType, BoolExpr, LogicExpr, AssignmentExpr, IfExpr, BreakExpr, WhileExpr,WithExpr, RecordExpr (dot notation), NewRecordExpr,FieldAssign, FunDecl, FunCallExpr, 
-;In Progress/NotSure: ArrayExpr (bracket access), NewArrayExpr, PengExpr(null),  Mutual Recursion, 
+;Done: NumExpr, StringExpr, VarExpr, MathExpr, NoVal, VarDecl, LetExpr, NameType, RecordType, ArrayType,
+;BoolExpr, LogicExpr, AssignmentExpr, IfExpr, BreakExpr, WhileExpr,WithExpr, RecordExpr (dot notation),
+;NewRecordExpr,FieldAssign, FunDecl, FunCallExpr, ArrayExpr (bracket access), NewArrayExpr,
+
+;In Progress/NotSure:  PengExpr(null),  Mutual Recursion,
+
 ;To Do:Break only in With/While
 
-;5 commented out Check-expects = All related to arrays
+;commented out Check-expects =
 ;Tricky Error Cases Chris said not to worry about until later
+;Crazy Long program at the end
 
 
 ;Mutual Recursion (names/arrays/records/functions)
@@ -200,16 +218,18 @@
     ;Strings
     [(StringExpr str) (types:make-StringType)]
     ;Array Expression (BracketAccess):
-    [(ArrayExpr name expr) (let* ([nameAr (typeCheck name env)]
-                                 [arField (findit (string->symbol expr) (types:ArrayType-element-type nameAr))])
+    ;(typeCheck expr env)
+    [(ArrayExpr name expr) (let* ([nameAr (typeCheck name env)] ;(string->symbol expr)
+                                 [arField (typeCheck expr env)]
+                                 [arType (types:ArrayType-element-type nameAr)])
+                             (printf "BracketName ~a~n" name)
+                             (printf "BracketExpr ~a~n" expr)
+                             ;(printf "BracketType ~a~n" (types:ArrayType-element-type nameAr))
                              (cond
-                               [(and (types:ArrayType? nameAr) (not(equal? arField #f))) (types:NiType-actual arField)]
-                               [else (error "Not a valid Array")]))]
+                               [(and (types:ArrayType? nameAr) (types:IntType? arField)) arType]
+                               [else (error "Not a valid Array Access")]))]
                            
 
-    ;New Array Expression:
-    [(NewArrayExpr name expr kind) (null)]
-    
     ;Record Expressions (Dot Notation):
     ;Check if Record name is a record
     ;Check if field is declared as legit in that record --> return that field's return type
@@ -274,9 +294,26 @@
     [(NewRecordExpr name assignments) (let ([recName (apply-env env (string->symbol name))])
                                       (recordSearch assignments env recName (types:RecordType-fields recName)))]
 
+     ;New Array Expression:
+    ;type must be declared as an array type
+    ;if so, extend env. with that array with "expr" elements, and have that kind assigned to each element 
+    [(NewArrayExpr name expr kind) (let ([arrName (apply-env env (string->symbol name))]
+                                         [arrExp (typeCheck expr env)]
+                                         [arrKind (apply-env env kind)])
+                                     
+                                     (printf "arrname: ~a~n" arrName)
+                                     (printf "expr: ~a~n" arrExp)
+                                    (printf "kind: ~a~n" kind) 
+                                     (cond
+                                       ;[(and(and (types:ArrayType? arrName) (types:IntType? arrExp)) (NumExpr-val kind)) arrName]
+                                       [(and (types:ArrayType? arrName)(types:IntType? arrExp)) arrName]
+                                       [else (error "Not arrType")]))]
+
+   
+    ;(printf "~n~a"(extend-env env arrName (types:make-VoidType)))
     ;Variable Declarations
     [(VarDecl type id expr) (let ([t1 (typeCheck expr env)])
-                           ;   (printf "env: ~a~n" env)
+                           ;   (printf "env: ~a~n" env)e
                            ;   (printf "t1 ~a~n" t1)
                               (cond
                                 [(and (eq? type #f) (not (types:PengType? t1))) (extend-env env (string->symbol id) (types:VarValue t1))] ;return type?
@@ -526,27 +563,28 @@ let
 in
 end") (types:make-VoidType))
 ; now a assignment with an array type
-;(check-expect (tc-str "
-;let
-;  define arrtype kind as array of int
-;  ni a is arrtype[5] of 0
-;in
-;end") (types:make-VoidType))
+(check-expect (tc-str "
+let
+  define arrtype kind as array of int
+  ni a is arrtype[5] of 0
+in
+end") (types:make-VoidType))
 ; and one where we specify the type
-;(check-expect (tc-str "
-;let
-;  define arrtype kind as array of int
-;  ni arrtype a is arrtype[5] of 0
-;in
-;end") (types:make-VoidType))
+(check-expect (tc-str "
+let
+  define arrtype kind as array of int
+  ni arrtype a is arrtype[5] of 0
+in
+end") (types:make-VoidType))
+
 ; and subscript access
-;(check-expect (tc-str "
-;let
-;  define arrtype kind as array of int
-;  ni arrtype a is arrtype[5] of 0
-;in
-;  a[1]
-;end") (types:make-IntType))
+(check-expect (tc-str "
+let
+  define arrtype kind as array of int
+  ni arrtype a is arrtype[5] of 0
+in
+  a[1]
+end") (types:make-IntType))
 
 ; branches
 (check-expect (tc-str "if true then true else true end") (types:make-BoolType))
@@ -642,5 +680,46 @@ end") (types:make-IntType))
 
 
 ;DO MONSTER CHECK-EXPECT AT END HERE!!!!!!
+
+(check-expect (tc-str "
+let
+  ni N is 9
+
+  define intArray kind as array of int
+
+  ni row is intArray [ N ] of 0
+  ni col is intArray [ N ] of 0
+  ni diag1 is intArray [ N + N - 1] of 0
+  ni diag2 is intArray [ N + N - 1] of 0
+
+  neewom printboard () is 
+    (with i as 0 to N - 1 do
+      (with j as 0 to N - 1 do
+        print(if col[i] = j then \" 0\" else \" .\" end)
+       end;
+       print(\"\n\"))
+     end;
+     print(\"\n\"))
+
+  neewom try (int c) is
+    if c = N - 1
+    then printboard()
+    else with r as 0 to N - 1 do
+              if row[r] = 0 & diag1[r + c] = 0 & diag2[r + 7 - c] = 0 
+              then (now row[r] is 1;
+                    now diag1[r + c] is 1;
+                    now diag2[r + 7 - c] is 1;
+                    now col[c] is r;
+                    try(c + 1);
+                    now row[r] is 0;
+                    now diag1[r + c] is 0;
+                    now diag2[r + 7 - c] is 0)
+              end
+         end
+    end
+  in
+    try(0)
+end
+") (types:make-VoidType))
 
 (test)
