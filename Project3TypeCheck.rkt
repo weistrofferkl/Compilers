@@ -27,11 +27,6 @@
     [(equal? item (types:NameTypePair-name (first lst))) (first lst)]
     [else (findit item (rest lst))]))
 
-;;(define (finditAr item arrKind)
-;  (cond
-;    [(null? lst) #f]
-;    [(equal? item (types:NameTypePair-name (first lst))) (first lst)]
-;    [else (findit item (rest lst))]))
 
 (define (recordSearch assignments env recTy recTyFields)
   (cond
@@ -45,6 +40,7 @@
              (recordSearch (rest assignments) env recTy (rest recTyFields))]))
 
 (define (funSearch pars env funTy funTyFields)
+  (printf "FunLen: ~a~n" (length funTyFields))
   (cond
     [(and(null? pars) (null? funTyFields)) (types:FunValue-return-type funTy)]
     [(not(equal? (length pars) (length funTyFields))) #f]
@@ -57,15 +53,15 @@
 ;Used in FunDecls --> Push Scope, extend environment for arguments, return body type
 (define (enterNewScope funName args rettype body env)
   (let* ([newEnv (push-scope env)] 
-        [rTy  (if (equal? rettype #f) (types:make-VoidType)
-                 (begin (apply-env newEnv (string->symbol rettype))))])
-     (for-each(lambda (arg)
-                (let ([argName (string->symbol(TypeField-name arg))]
-                      [argKind (apply-env env (string->symbol (TypeField-kind arg)))])
+         [rTy  (if (equal? rettype #f) (types:make-VoidType)
+                   (begin (apply-env newEnv (string->symbol rettype))))])
+    (for-each(lambda (arg)
+               (let ([argName (string->symbol(TypeField-name arg))]
+                     [argKind (apply-env env (string->symbol (TypeField-kind arg)))])
                  ; (printf "argkind: ~a~n" argKind)
                  ; (printf "argname: ~a~n" argName)
                  ; (printf "arg: ~a~n" arg)
-                  
+                 
                  (extend-env newEnv argName (types:VarValue argKind)))) args)
     ;(printf "body: ~a~n" (equal? (typeCheck body newEnv) rTy))
     ;(printf "rTy: ~a~n" rTy)
@@ -86,13 +82,68 @@
       [(RecordType name fields next) (modForEach funct (RecordType-next decl))])
     )))
 
-;(define (funForEach funct decl)
- ; (if (empty? decl) '()
-  ;  (begin
-   ;   (funct decl)
-    ;  [(FunDecl name args rettype body next) (funForEach funct (FunDecl-next decl))]
-     ; )))
+;Mutual Recursion: Function For-Each
+;(nameFields fields env
 
+(define (funForEach funct decl)
+  (if (empty? decl) '()
+    (begin
+      (funct decl)
+      (funForEach funct (FunDecl-next decl))
+      
+      )))
+
+(define (typeCheckFun decl env)
+  (funForEach (lambda (decl)
+                ;create a list of NameType Pairs from the fieldType list of each FunDecl
+                ;make sure the types of those parameters are valid (apply-env)
+                ;make sure rettype is valid
+                ;add FunValue to current Env.
+                (match decl
+                  [(FunDecl name args rettype body next)
+                   (printf "Fields: ~a~n" (nameFields args env))
+                
+                (let ([nameList (nameFields args env)]
+                      [rTy  (if (equal? rettype #f) (types:make-VoidType)
+                 (begin (apply-env env (string->symbol rettype))))])
+                  (begin (printf "Name: ~a~n" name)
+                         
+                         
+                  (extend-env env (string->symbol name) (types:FunValue nameList rTy))
+                  (printf "FunVal: ~a~n" (apply-env env (string->symbol name))))
+
+                  )]))decl)
+                  ;(cond
+                   ; [(and (equal? (typeCheck body env) rTy) (equal? (apply-env env nameList) rTy))(extend-env env (types:FunValue args rettype))]
+                    ;[else (error "Error Thrown in first walk for typeCheckFun")])))decl)
+  
+  (funForEach (lambda (decl)
+                (match decl
+                  [(FunDecl name args rettype body next)
+                ;Push a new Scope
+                ;When eval a function, look it up in the env and extend that env with the parameters of the funct
+                ;typecheck the body and make sure the body return type matches the declared return type
+                (let* ([newScopeEnv (push-scope env)]
+                      [funTy (apply-env env (string->symbol name))]
+                   ;   [rTy  (typeCheck rettype newScopeEnv)])
+                      [rTy  (if (eq? #f rettype) (types:make-VoidType) (apply-env env (string->symbol rettype)))])
+
+                  (for-each(lambda (args)
+                             (let ([argName (string->symbol(TypeField-name args))]
+                                   [argKind (apply-env env (string->symbol (TypeField-kind args)))])
+                               ; (printf "argkind: ~a~n" argKind)
+                               ; (printf "argname: ~a~n" argName)
+                               ; (printf "arg: ~a~n" arg)
+                 
+                               (extend-env newScopeEnv argName (types:VarValue argKind)))) args)
+
+
+                      
+                 ; (extend-env newScopeEnv name (types:FunValue-parameters funTy))
+                  (equal? (typeCheck body newScopeEnv) rTy)
+                  
+              )]))decl))
+             
 (define (typeCheckTD decl env)
   (modForEach (lambda (type)
                 (match type
@@ -149,11 +200,11 @@
 
 ;Done: NumExpr, StringExpr, VarExpr, MathExpr, NoVal, VarDecl, LetExpr, NameType, RecordType, ArrayType,
 ;BoolExpr, LogicExpr, AssignmentExpr, IfExpr, BreakExpr, WhileExpr,WithExpr, RecordExpr (dot notation),
-;NewRecordExpr,FieldAssign, FunDecl, FunCallExpr, ArrayExpr (bracket access), NewArrayExpr,
+;NewRecordExpr,FieldAssign, FunDecl, FunCallExpr, ArrayExpr (bracket access), NewArrayExpr, Mutual Recursion
 
-;In Progress/NotSure: PengExpr(null), Mutual Recursion (Functions)
+;In Progress/NotSure: PengExpr(null), Trickies
 
-;To Do:Break only in With/While
+;To Do: Break only in With/While, Trickies
 
 ;commented out Check-expects =
 ;Tricky Error Cases Chris said not to worry about until later
@@ -169,7 +220,7 @@
 
 ;Recursive
 (define (typeCheck ast env)
- (printf "typeCheck with ~a~n~n" (object-name ast))
+ ;(printf "typeCheck with ~a~n~n" (object-name ast))
   (match ast
     ;Empty List --> VoidType
     ['() (types:make-VoidType)]
@@ -210,8 +261,8 @@
     [(ArrayExpr name expr) (let* ([nameAr (typeCheck name env)] ;(string->symbol expr)
                                  [arField (typeCheck expr env)]
                                  [arType (types:ArrayType-element-type nameAr)])
-                             (printf "BracketName ~a~n" name)
-                             (printf "BracketExpr ~a~n" expr)
+                            ; (printf "BracketName ~a~n" name)
+                             ;(printf "BracketExpr ~a~n" expr)
                              ;(printf "BracketType ~a~n" (types:ArrayType-element-type nameAr))
                              (cond
                                [(and (types:ArrayType? nameAr) (types:IntType? arField)) arType]
@@ -233,7 +284,7 @@
                                
     ;Variable Expression:
     [(VarExpr name) (let ([t1 (apply-env env(string->symbol name))])
-                      (printf "VAR~n~n~a" name)
+                      ;(printf "VAR~n~n~a" name)
                       (cond
                         
                         [(equal? name "true") (types:make-BoolType)]
@@ -277,8 +328,8 @@
      ;(printf "name ~a~n" )
      (let ([t1 (typeCheck name env)] ;(apply-env env (string->symbol name))
            [t2 (typeCheck expr env)])
-       (printf "name ~a~n" t1)
-       (printf "t2 ~a~n" t2)
+       ;(printf "name ~a~n" t1)
+       ;(printf "t2 ~a~n" t2)
        (cond
          [(equal? t1 t2) (types:make-VoidType)]
          [else (error "AssignmentExpression Suckssssss")]))]
@@ -322,12 +373,16 @@
     ;Collect name, parameters, store them in environment (FunValue)
     ;Must enter new scope, add bindings to parameters (extend environment)
     ;typecheck body, return final type of expression, compare this against function definition
-    [(FunDecl name args rettype body next) (enterNewScope name args rettype body env)]
+    ;(typeCheckFun decl env)
+    [(FunDecl name args rettype body next) (typeCheckFun ast env)]
 
     ;Let Expressions
     [(LetExpr decls exprs) (let ([env1 (push-scope env)])
+                                      ; [testThing (types:RecordType? decls)])
                              (typeCheck decls env1)
-                           ;  (printf "env1: ~a~n" env1)
+                           ;  (printf "decls: ~a~n" decls)
+                             ;(printf "exprs: ~a~n" exprs)
+                             ;(printf "apply: ~a~n"  (apply-env env1 (typeCheck decls env1)))
                              (typeCheck exprs env1))]
 
     ;If Expressions
@@ -350,7 +405,7 @@
     [(WithExpr name init from to) (let ([expr1 (typeCheck from env)]
                                         [expr2 (typeCheck to env)]
                                         [expr3 (typeCheck init env)])
-                                      (printf "expr3: ~a~n" expr3)
+                                     ; (printf "expr3: ~a~n" expr3)
                                     (cond
                                       [(and (and (types:IntType? expr1) (types:IntType? expr2))(types:VoidType? expr3)) (types:make-VoidType)]
                                       [else (error "WithExpression Error")]))]
@@ -358,10 +413,12 @@
     ;FunCall Expression:
     ;If ID indicates a function w/o return val then it must not return a val
     ;(recordSearch assignments env recName (types:RecordType-fields recName)))]
-    [(FuncallExpr name args) (let ([id (apply-env env (string->symbol name))]
+    [(FuncallExpr name args)(begin (printf "env in FunCall : ~a~n" env)
+     (let ([id (apply-env env (string->symbol name))]
                                    [argList (typeCheck args env)])
+       (printf "ID ~a~n" id )
                                (funSearch args env id (types:FunValue-parameters id))  
-                               )]
+                               ))]
                                  
                                         
                              
@@ -406,6 +463,9 @@
 
 (check-error (tc-str "true & 1"))
 (check-expect (tc-str "true & (5+3 < 6)") (types:make-BoolType))
+
+; simple sequence expressions
+(check-expect (tc-str "(1; 2; 3; 4)") (types:make-IntType))
 ; simple let expressions
 (check-expect (tc-str "let ni x is 5 in end") (types:make-VoidType))
 ; more complex, x should be stored and its type retreived 
@@ -415,6 +475,7 @@ ni itype x is 5 in x end") (types:make-IntType))
 
 ;Peng
 (check-expect (tc-str "peng") (types:make-PengType))
+
 ; simple records
 (check-expect (tc-str
 "let
@@ -497,23 +558,23 @@ in d.p.x + 5 end") (types:make-IntType))
 ;  define dot kind as { point p, color c }
 ;  ni dot d is dot { p is point { x is 1, y is 2, z is 3 }, c is color { r is 1, g is 1, b is 1 } }
 ;in d.p end"))
-;(check-expect (tc-str "
-;let
-;  define color kind as { int r, int g, int b }
-;  ni color col is 
-;    let
-;      define point kind as { int x, int y, int z }
-;    in
-;      let
-;         define dot kind as { point p, color c }
-;         ni dot d is dot { p is point { x is 1, y is 2, z is 3 }, c is color { r is 1, g is 1, b is 1 } }
-;      in
-;        d.c
-;      end
-;    end
-;in
-;  col.g
-;end") (types:make-IntType))
+(check-expect (tc-str "
+let
+  define color kind as { int r, int g, int b }
+  ni color col is 
+    let
+      define point kind as { int x, int y, int z }
+    in
+      let
+         define dot kind as { point p, color c }
+         ni dot d is dot { p is point { x is 1, y is 2, z is 3 }, c is color { r is 1, g is 1, b is 1 } }
+      in
+        d.c
+      end
+    end
+in
+  col.g
+end") (types:make-IntType))
 
 ;(check-error (tc-str "
 ;let
@@ -592,7 +653,7 @@ end") (types:make-IntType))
 ; record expression assign
 (check-expect (tc-str "let define p kind as { int v } ni p x is p { v is 5 } in now x.v is 6 end") (types:make-VoidType))
 ; array assign
-;(check-expect (tc-str "let define i kind as array of int ni iarr is i[10] of 0 in now iarr[2] is 12 end") (types:make-VoidType))
+(check-expect (tc-str "let define i kind as array of int ni iarr is i[10] of 0 in now iarr[2] is 12 end") (types:make-VoidType))
 ; assign peng
 ;(check-expect (tc-str "let define no kind as { } ni x is no {} in now x is peng end") (types:make-VoidType))
 ; record assign
@@ -657,6 +718,24 @@ let
 in
   odd(5)
 end") (types:make-BoolType))
+
+; mutually recursive, for real this time
+(check-expect (tc-str "
+let
+   neewom foo() is bar() and 
+   neewom bar() is foo()
+in
+  foo()
+end") (types:make-VoidType))
+
+; mutually recursive, for real this time with args
+(check-expect (tc-str "
+let
+   neewom foo(int x) as int is bar(x) and 
+   neewom bar(int x) as int is foo(x)
+in
+  foo(42)
+end") (types:make-IntType))
 
 ; multiple args
 (check-expect (tc-str "
