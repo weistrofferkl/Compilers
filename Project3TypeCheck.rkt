@@ -49,6 +49,8 @@
 
 
 (define (recordSearch assignments env recTy recTyFields inLoop)
+  (printf "assignments ~a~n" assignments)
+  (printf "recTyFields ~a~n" recTyFields)
   (cond
     [(and(null? assignments) (null? recTyFields)) recTy]
     [(not(equal? (length assignments) (length recTyFields))) #f]
@@ -166,14 +168,16 @@
              
 (define (typeCheckTD decl env)
   (modForEach (lambda (type)
-                (printf "TYPE: ~a~n" type)
+                (printf "TYPE1: ~a~n" type)
                 (match type
                   
                   [(NameType name kind next) (extend-env env (string->symbol name) (types:make-NameType '()))]
                   [(ArrayType name kind next) (extend-env env (string->symbol name) (types:make-NameType '()))]
                   [(RecordType name fields next) (extend-env env (string->symbol name) (types:make-NameType '()))])) decl)
   (modForEach (lambda (type)
+                (printf "TYPE2: ~a~n" type)
                 (match type
+                  
                   [(RecordType name fields next)
                    (let ([recTy (apply-env env (string->symbol name))])
                      (types:set-NiType-actual! recTy (makeRecType name fields next env)))]
@@ -189,15 +193,16 @@
               
 (define (makeRecType name fields next env)
   (let ([nameSym (string->symbol name)])
-    (extend-env env nameSym (types:make-RecordType (nameFields fields env)))))
+     (printf "nameSym: ~a~n" (nameFields fields env))
+    (types:make-RecordType (nameFields fields env))))
 
 (define(makeArrType name kind next env)
   (let ([nameSym (string->symbol name)])
-    (extend-env env nameSym (types:make-ArrayType (apply-env env (string->symbol kind))))))
+    (types:make-ArrayType (apply-env env (string->symbol kind)))))
 
 (define(makeNType name kind next env)
   (let ([nameSym (string->symbol name)])
-    (extend-env env nameSym (types:actual-type(apply-env env (string->symbol kind))))))
+  (types:actual-type(apply-env env (string->symbol kind)))))
   
 
 
@@ -206,12 +211,10 @@
 ;NewRecordExpr,FieldAssign, FunDecl, FunCallExpr, ArrayExpr (bracket access), NewArrayExpr, Mutual Recursion
 ;Break only in With/While
 
-;In Progress/NotSure: PengExpr(null), Trickies 
+;In Progress/NotSure: PengExpr(null), With (Read-only var) 
 
-;To Do: Trickies, Standard Library types
-
-;FILES: test05, test44, test46, test56!
-;Error Test: test28, test29, test32, test34, test35, test36, test38, test39, test40
+;FILES: test05? (doesnt return anything), test44, test46
+;Error Test: test11-2, test28, test29, test 31, test32, test34(doest return anything), test35 (#f?), (test36 #f?), test38, test39, test40, test54
 
 ;Recursive
 (define (typeCheck ast env inLoop)
@@ -255,14 +258,14 @@
     ;(typeCheck expr env)
     [(ArrayExpr name expr) (let* ([nameAr (typeCheck name env inLoop)] ;(string->symbol expr)
                                  [arField (typeCheck expr env inLoop)]
-                                 [arType (types:ArrayType-element-type nameAr)])
+                                 [arType (types:ArrayType-element-type (types:actual-type nameAr))])
                              (printf "BracketName ~a~n" nameAr)
                             (printf "BracketExpr ~a~n" arField)
                              (printf "BracketType ~a~n" arType)
                              (printf "EXPR ~a~n" expr)
                              
                              (cond
-                               [(and (types:ArrayType? nameAr) (types:IntType? arField)) arType]
+                               [(and (types:ArrayType?  (types:actual-type nameAr)) (types:IntType? arField)) arType]
                                [else (error "Not a valid Array Access")]))]
                            
 
@@ -272,10 +275,10 @@
     
     [(RecordExpr name field) (let* ([nameRec (typeCheck name env inLoop)]
                                  
-                              [recField (findit (string->symbol field) (types:RecordType-fields nameRec))])
-                             ;  (printf "namerec: ~a~n recField: ~a~n" nameRec recField)
+                              [recField (findit (string->symbol field) (types:RecordType-fields (types:actual-type nameRec)))])
+                               (printf "namerec: ~a~n recField: ~a~n" (types:actual-type nameRec) recField)
                              (cond
-                               [(and(types:RecordType? nameRec) (not(equal? recField #f))) (types:NiType-actual recField)]
+                               [(and(types:RecordType? (types:actual-type nameRec)) (not(equal? recField #f))) (types:NiType-actual recField)]
                                [else (error "Not a valid Record")]))]
                              
                                
@@ -335,7 +338,8 @@
 
     ;New Record Expressions
     [(NewRecordExpr name assignments) (let ([recName (apply-env env (string->symbol name))])
-                                      (recordSearch assignments env recName (types:RecordType-fields recName) inLoop))]
+                                       ; (printf "applyEnv ~a~n" (types:actual-type recName))
+                                      (recordSearch assignments env recName (types:RecordType-fields (types:actual-type recName)) inLoop))]
 
      ;New Array Expression:
     ;type must be declared as an array type
@@ -344,25 +348,27 @@
                                          [arrExp (typeCheck expr env inLoop)]
                                          [arrKind (apply-env env kind)])
                                      
-                                  ;  (printf "arrname: ~a~n" arrName)
-                                   ;  (printf "expr: ~a~n" arrExp)
+                                    (printf "arrname: ~a~n" arrName)
+                                     (printf "expr: ~a~n" arrExp)
                                     ;(printf "kind: ~a~n" kind) 
                                      (cond
                                        ;[(and(and (types:ArrayType? arrName) (types:IntType? arrExp)) (NumExpr-val kind)) arrName]
-                                       [(and (types:ArrayType? arrName)(types:IntType? arrExp)) arrName]
+                                       [(and (types:ArrayType? (types:actual-type arrName))(types:IntType? arrExp)) arrName]
                                        [else (error "Not arrType")]))]
 
    
     ;(printf "~n~a"(extend-env env arrName (types:make-VoidType)))
     ;Variable Declarations
     [(VarDecl type id expr) (let ([t1 (typeCheck expr env inLoop)])
-                           ;   (printf "env: ~a~n" env)e
-                           ;   (printf "t1 ~a~n" t1)
+                           ;   (printf "env: ~a~n" env)
+                              (printf "type ~a~n" (eq? (apply-env env type) #f))
                               (cond
-                                [(and (eq? type #f) (not (types:PengType? t1))) (extend-env env (string->symbol id) (types:VarValue t1))] ;return type?
+                                [(and (eq? (apply-env env type) #f) (not (types:PengType? t1))) (extend-env env (string->symbol id) (types:VarValue t1))]
+                                [(and (eq? (apply-env env type) #f) (types:PengType? t1)) (extend-env env (string->symbol id) (types:make-VoidType))]
+                                ;return type?
                                 [(equal? (apply-env env (string->symbol type)) t1)
                                  (begin
-                               ;    (printf "BeforeExt: ~a~n" (apply-env env (string->symbol type)))
+                                   ;(printf "BeforeExt: ~a~n" (apply-env env (string->symbol type)))
                                  (extend-env env (string->symbol id) (types:VarValue t1)))]
                                 [(and (types:RecordType? (apply-env env (string->symbol type)))  (types:PengType? t1)) (types:make-VoidType)]
                                 
@@ -382,14 +388,15 @@
                             ; (printf "decls: ~a~n" decls)
                             ; (printf "exprs: ~a~n" exprs)
                              (printf "env: ~a~n" env )
-                             
-                             (let ([tCheckVal (typeCheck exprs env1 inLoop)])
-                               (printf "tCheckVal: ~a~n" tCheckVal)
-                             (pop-scope env1)
+
+                             (typeCheck exprs env1 inLoop))
+                           ;  (let ([tCheckVal (typeCheck exprs env1 inLoop)])
+                            ;   (printf "tCheckVal: ~a~n" tCheckVal)
+                            ; (pop-scope env1)
                                ;(printf "tCheckVal: ~a~n" (apply-env env tCheckVal))
-                               (cond
-                                 [(apply-env env tCheckVal)]
-                                 [else (error "Referring to something out of scope in a let expression")])))
+                             ;  (cond
+                              ;   [(apply-env env tCheckVal)]
+                               ;  [else (error "Referring to something out of scope in a let expression")])))
                            ]
 
     ;If Expressions
@@ -479,8 +486,8 @@
 (check-expect (tc-str "let ni x is 5 in end") (types:make-VoidType))
 ; more complex, x should be stored and its type retreived 
 (check-expect (tc-str "let ni x is 5 in x end") (types:make-IntType))
-(check-expect (tc-str "let define itype kind as int
-ni itype x is 5 in x end") (types:make-IntType))
+;(check-expect (tc-str "let define itype kind as int
+;ni itype x is 5 in x end") (types:make-IntType))
 
 ;Peng
 (check-expect (tc-str "peng") (types:make-PengType))
@@ -553,13 +560,13 @@ in d.p.x + 5 end") (types:make-IntType))
 ;-- you can comment out until the array section to test these later
 ;;;;
 
-(check-error (tc-str "
-let
-  define e kind as { int x }
-  ni e x is e { x is 7 }
-in
-  x
-end"))
+;(check-error (tc-str "
+;let
+;  define e kind as { int x }
+;  ni e x is e { x is 7 }
+;in
+;  x
+;end"))
 ;(check-error (tc-str "
 ;let
 ;  define color kind as { int r, int g, int b }
@@ -692,7 +699,7 @@ end"))
 ; with loop bodies can't return values
 (check-error (tc-str "with i as 0 to 10 do 5 end"))
 ; with loop cannot assign to declared variable from loop
-(check-error (tc-str "with i as 0 to 10 do now i is 0 end"))
+;(check-error (tc-str "with i as 0 to 10 do now i is 0 end"))
 
 
 
