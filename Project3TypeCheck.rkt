@@ -84,7 +84,7 @@
                  ; (printf "argname: ~a~n" argName)
                  ; (printf "arg: ~a~n" arg)
                  
-                 (extend-env newEnv argName (types:VarValue argKind)))) args)
+                 (extend-env newEnv argName (types:VarValue argKind #f)))) args)
     ;(printf "body: ~a~n" (equal? (typeCheck body newEnv) rTy))
     ;(printf "rTy: ~a~n" rTy)
     (cond
@@ -157,7 +157,7 @@
                                ; (printf "argname: ~a~n" argName)
                                ; (printf "arg: ~a~n" arg)
                  
-                               (extend-env newScopeEnv argName (types:VarValue argKind)))) args)
+                               (extend-env newScopeEnv argName (types:VarValue argKind #f)))) args)
 
 
                       
@@ -209,9 +209,9 @@
 ;Done: NumExpr, StringExpr, VarExpr, MathExpr, NoVal, VarDecl, LetExpr, NameType, RecordType, ArrayType,
 ;BoolExpr, LogicExpr, AssignmentExpr, IfExpr, BreakExpr, WhileExpr,WithExpr, RecordExpr (dot notation),
 ;NewRecordExpr,FieldAssign, FunDecl, FunCallExpr, ArrayExpr (bracket access), NewArrayExpr, Mutual Recursion
-;Break only in With/While
+;Break only in With/While, With (Read-only var)
 
-;In Progress/NotSure: PengExpr(null), With (Read-only var) 
+;In Progress/NotSure: PengExpr(null) 
 
 ;FILES: test05? (doesnt return anything), test44, test46
 ;Error Test: test11-2, test28, test29, test 31, test32, test34(doest return anything), test35 (#f?), (test36 #f?), test38, test39, test40, test54
@@ -259,10 +259,10 @@
     [(ArrayExpr name expr) (let* ([nameAr (typeCheck name env inLoop)] ;(string->symbol expr)
                                  [arField (typeCheck expr env inLoop)]
                                  [arType (types:ArrayType-element-type (types:actual-type nameAr))])
-                             (printf "BracketName ~a~n" nameAr)
-                            (printf "BracketExpr ~a~n" arField)
-                             (printf "BracketType ~a~n" arType)
-                             (printf "EXPR ~a~n" expr)
+                             ;(printf "BracketName ~a~n" nameAr)
+                            ;(printf "BracketExpr ~a~n" arField)
+                             ;(printf "BracketType ~a~n" arType)
+                             ;(printf "EXPR ~a~n" expr)
                              
                              (cond
                                [(and (types:ArrayType?  (types:actual-type nameAr)) (types:IntType? arField)) arType]
@@ -284,10 +284,10 @@
                                
     ;Variable Expression:
     [(VarExpr name) (let ([t1 (apply-env env(string->symbol name))])
-                      (printf "VAR~a~n" t1)
-                      (printf "NAME~a~n" name)
+                      ;(printf "VAR~a~n" t1)
+                      ;(printf "NAME~a~n" name)
                       (cond
-
+                        ;[(and(types:VarValue? t1)(equal? (types:VarValue-readOnly t1) #t)) (error "Accessing a read-only variable")]
                         [(equal? name "true") (types:make-BoolType)]
                         [(equal? name "false") (types:make-BoolType)]
                         [(equal? t1 #f) (error "Type Error")]
@@ -327,14 +327,24 @@
 
     ;Assignment Expression:
     [(AssignmentExpr name expr)
-     ;(printf "name ~a~n" )
+     (printf "nameASS ~a~n" name)
      (let ([t1 (typeCheck name env inLoop)] ;(apply-env env (string->symbol name))
            [t2 (typeCheck expr env inLoop)])
-       ;(printf "name ~a~n" t1)
+       (printf "nameHERE ~a~n" name)
+       (printf "exprHERE ~a~n" t2)
        ;(printf "t2 ~a~n" t2)
+       (match name
+         [(VarExpr name)(if (eq?(types:VarValue-readOnly (apply-env env (string->symbol name))) #t) (error "ASSERROR")
+                                                          (cond
+                                                            [(equal? t1 t2) (types:make-VoidType)]
+                                                            [else (error "ASSEXPR SUCKS")]))]
+         [_
+       
+         
        (cond
+         
          [(equal? t1 t2) (types:make-VoidType)]
-         [else (error "AssignmentExpression Suckssssss")]))]
+         [else (error "AssignmentExpression Suckssssss")])]))]
 
     ;New Record Expressions
     [(NewRecordExpr name assignments) (let ([recName (apply-env env (string->symbol name))])
@@ -361,15 +371,15 @@
     ;Variable Declarations
     [(VarDecl type id expr) (let ([t1 (typeCheck expr env inLoop)])
                            ;   (printf "env: ~a~n" env)
-                              (printf "type ~a~n" (eq? (apply-env env type) #f))
+                            ;  (printf "typeVarDecl: ~a~n" (eq? (apply-env env type) #f))
                               (cond
-                                [(and (eq? (apply-env env type) #f) (not (types:PengType? t1))) (extend-env env (string->symbol id) (types:VarValue t1))]
+                                [(and (eq? (apply-env env type) #f) (not (types:PengType? t1))) (extend-env env (string->symbol id) (types:VarValue t1 #f))]
                                 [(and (eq? (apply-env env type) #f) (types:PengType? t1)) (extend-env env (string->symbol id) (types:make-VoidType))]
                                 ;return type?
                                 [(equal? (apply-env env (string->symbol type)) t1)
                                  (begin
                                    ;(printf "BeforeExt: ~a~n" (apply-env env (string->symbol type)))
-                                 (extend-env env (string->symbol id) (types:VarValue t1)))]
+                                 (extend-env env (string->symbol id) (types:VarValue t1 #f)))]
                                 [(and (types:RecordType? (apply-env env (string->symbol type)))  (types:PengType? t1)) (types:make-VoidType)]
                                 
                                 [else (error "ERMERGRD")]))]
@@ -421,7 +431,7 @@
                                         
                                      ; (printf "expr3: ~a~n" expr3)
                                     (cond
-                                      [(and (types:IntType? expr1) (types:IntType? expr2)) (extend-env env (string->symbol name) (types:VarValue (types:make-IntType)))]
+                                      [(and (types:IntType? expr1) (types:IntType? expr2)) (extend-env env (string->symbol name) (types:VarValue (types:make-IntType) #t))]
                                       [else (error "WithExpression Error from and to must be ints")]))
                                     (let ([expr3 (typeCheck init env #t)])
                                       (if (types:VoidType? expr3) (types:make-VoidType) (error "Expr3 broken")))]
@@ -699,7 +709,7 @@ end"))
 ; with loop bodies can't return values
 (check-error (tc-str "with i as 0 to 10 do 5 end"))
 ; with loop cannot assign to declared variable from loop
-;(check-error (tc-str "with i as 0 to 10 do now i is 0 end"))
+(check-error (tc-str "with i as 0 to 10 do now i is 0 end"))
 
 
 

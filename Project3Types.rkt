@@ -61,7 +61,7 @@
   (NameType fieldName))
 
 ;VALUES
-(struct VarValue (type) #:transparent)
+(struct VarValue (type readOnly) #:transparent)
 ; as with records, we need something for parameters,
 ; so this will be stored as a list of NameTypePair structs
 (struct FunValue (parameters return-type) #:transparent)
