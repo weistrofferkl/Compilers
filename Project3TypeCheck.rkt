@@ -21,7 +21,7 @@
     (extend-env env 'ord (types:FunValue (list (types:NameTypePair (types:make-StringType) 's )) (types:make-IntType)))
     (extend-env env 'chr (types:FunValue(list (types:NameTypePair (types:make-IntType) 's )) (types:make-StringType)))
     (extend-env env 'size (types:FunValue (list (types:NameTypePair (types:make-StringType) 's )) (types:make-IntType)))
-    (extend-env env 'substring (types:FunValue(list (types:NameTypePair (types:make-StringType) 's ) (types:NameTypePair (types:make-IntType 'first))
+    (extend-env env 'substring (types:FunValue(list (types:NameTypePair (types:make-StringType) 's ) (types:NameTypePair (types:make-IntType) 'first)
                                                     (types:NameTypePair (types:make-IntType) 'n)) (types:make-StringType)))
     (extend-env env 'concat (types:FunValue (list(types:NameTypePair (types:make-StringType) 's1) (types:NameTypePair (types:make-StringType) 's2))
                                             (types:make-StringType)))
@@ -166,7 +166,9 @@
              
 (define (typeCheckTD decl env)
   (modForEach (lambda (type)
+                (printf "TYPE: ~a~n" type)
                 (match type
+                  
                   [(NameType name kind next) (extend-env env (string->symbol name) (types:make-NameType '()))]
                   [(ArrayType name kind next) (extend-env env (string->symbol name) (types:make-NameType '()))]
                   [(RecordType name fields next) (extend-env env (string->symbol name) (types:make-NameType '()))])) decl)
@@ -318,7 +320,7 @@
                                 [t2 (typeCheck e2 env inLoop)])
                             (cond
                               [(and (types:BoolType? t1) (types:BoolType? t2)) (types:make-BoolType)] 
-                              [else (error "Logic Type not Compatable")]))]
+                              [else (error "Logic Type not Compatable " ast)]))]
 
     ;Assignment Expression:
     [(AssignmentExpr name expr)

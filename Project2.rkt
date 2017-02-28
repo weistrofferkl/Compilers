@@ -188,7 +188,7 @@
 
     (expression
      ;Boolean Expressions first
-     [(boolExpression) $1])
+     [(assExpr) $1])
     
 
     ;Math Expressions: With Prescidence 
@@ -212,13 +212,13 @@
 
    ;Boolean Expressions
   (boolExpression
-      [(boolExpression EQ logicExpression) (BoolExpr $1 'eq $3)]
-      [(logicExpression NE logicExpression) (BoolExpr $1 'ne $3)]
-      [(logicExpression LT logicExpression) (BoolExpr $1 'lt $3)]
-      [(logicExpression GT logicExpression) (BoolExpr $1 'gt $3)]
-      [(logicExpression LE logicExpression) (BoolExpr $1 'le $3)]
-      [(logicExpression GE logicExpression) (BoolExpr $1 'ge $3)]
-      [(logicExpression) $1]
+      [(boolExpression EQ mathExpression) (BoolExpr $1 'eq $3)]
+      [(boolExpression NE mathExpression) (BoolExpr $1 'ne $3)]
+      [(boolExpression LT mathExpression) (BoolExpr $1 'lt $3)]
+      [(boolExpression GT mathExpression) (BoolExpr $1 'gt $3)]
+      [(boolExpression LE mathExpression) (BoolExpr $1 'le $3)]
+      [(boolExpression GE mathExpression) (BoolExpr $1 'ge $3)]
+      [(mathExpression) $1]
       )
 
   ;Logic Expressions
@@ -229,13 +229,13 @@
   
   ;Logic terms
   (logTerm
-   [(logTerm BOOLAND mathExpression) (LogicExpr $1 'and $3)]
-   [(assExpr) $1])
+   [(logTerm BOOLAND boolExpression) (LogicExpr $1 'and $3)]
+   [(boolExpression) $1])
 
   ;AssignmentExpressions
   (assExpr
       [(NOW LValue IS expression) (AssignmentExpr $2 $4)]
-      [(mathExpression) $1])
+      [(logicExpression) $1])
     
 
      (simple-expression
@@ -297,17 +297,17 @@
 
 ;;Test cases:
 ;; var declarations
-;(check-expect (parse-str "ni x is 5") (list (VarDecl #f "x" (NumExpr "5"))))
+(check-expect (parse-str "ni x is 5") (list (VarDecl #f "x" (NumExpr "5"))))
 ;; type declarations
-;(check-expect (parse-str "define int2 kind as int") (list (NameType "int2" "int" '())))
-;(check-expect (parse-str "define intarr kind as array of int") (list (ArrayType "intarr" "int" '())))
-;(check-expect (parse-str "define intrec kind as { int x }")
-;              (list (RecordType "intrec" (list (TypeField "x" "int")) '())))
+(check-expect (parse-str "define int2 kind as int") (list (NameType "int2" "int" '())))
+(check-expect (parse-str "define intarr kind as array of int") (list (ArrayType "intarr" "int" '())))
+(check-expect (parse-str "define intrec kind as { int x }")
+              (list (RecordType "intrec" (list (TypeField "x" "int")) '())))
 ;; function declarations
-;(check-expect (parse-str "neewom getX() as int is 5")
-;              (list (FunDecl "getX" '() "int" (NumExpr "5") '())))
-;; function calls of various sorts
-;(check-expect (parse-str "add2(5)") (list (FuncallExpr "add2" (list (NumExpr "5")))))
+(check-expect (parse-str "neewom getX() as int is 5")
+              (list (FunDecl "getX" '() "int" (NumExpr "5") '())))
+ ;function calls of various sorts
+(check-expect (parse-str "add2(5)") (list (FuncallExpr "add2" (list (NumExpr "5")))))
 ;; parens
 ;(check-expect (parse-str "(5)") (list (NumExpr "5")))
 ;; various sequences
@@ -323,15 +323,15 @@
 ;(check-expect (parse-str "let ni x is 5 in x end")
 ;              (list (LetExpr (list (VarDecl #f "x" (NumExpr "5"))) (list (VarExpr "x")))))
 ;; math ops
-;(check-expect (parse-str "1+2")
-;              (list (MathExpr (NumExpr "1") '+ (NumExpr "2"))))
+(check-expect (parse-str "1+2")
+              (list (MathExpr (NumExpr "1") '+ (NumExpr "2"))))
 ;; math ops using negated numbers
-;(check-expect (parse-str "-5") (list (MathExpr (NumExpr "0") '- (NumExpr "5"))))
-;(check-expect (parse-str "-5 - (-9)") (list (MathExpr (MathExpr (NumExpr "0") '- (NumExpr "5")) '- (MathExpr (NumExpr "0") '- (NumExpr "9")))))
+(check-expect (parse-str "-5") (list (MathExpr (NumExpr "0") '- (NumExpr "5"))))
+(check-expect (parse-str "-5 - (-9)") (list (MathExpr (MathExpr (NumExpr "0") '- (NumExpr "5")) '- (MathExpr (NumExpr "0") '- (NumExpr "9")))))
 ;
 ;; bool expressions
-;(check-expect (parse-str "5=6") (list (BoolExpr (NumExpr "5") 'eq (NumExpr "6"))))
-;(check-expect (parse-str "(5=6)=0") (list (BoolExpr (BoolExpr (NumExpr "5") 'eq (NumExpr "6"))'eq (NumExpr "0"))))
+(check-expect (parse-str "5=6") (list (BoolExpr (NumExpr "5") 'eq (NumExpr "6"))))
+(check-expect (parse-str "(5=6)=0") (list (BoolExpr (BoolExpr (NumExpr "5") 'eq (NumExpr "6"))'eq (NumExpr "0"))))
 ;
 ;; array creation
 ;(check-expect (parse-str "intarr[10] of 6")
@@ -344,11 +344,11 @@
 ;                                                                                      (FieldAssign "y" (NumExpr "2"))))))
 ;
 ;
-;(check-expect (parse-str "5-6*3") (list (MathExpr (NumExpr "5") '- (MathExpr (NumExpr "6") '* (NumExpr "3")))))
+(check-expect (parse-str "5-6*3") (list (MathExpr (NumExpr "5") '- (MathExpr (NumExpr "6") '* (NumExpr "3")))))
 ;(check-expect (parse-str "3*foo()") (list (MathExpr (NumExpr "3") '* (FuncallExpr "foo" '()))))
 ;
 ;(check-expect (parse-str "1+ foo() *1") (list (MathExpr (NumExpr "1") '+ (MathExpr (FuncallExpr "foo" '()) '* (NumExpr "1")))))
 ;
 ;
 ;
-;(test)
+(test)
