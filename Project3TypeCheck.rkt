@@ -383,7 +383,13 @@
                             ; (printf "exprs: ~a~n" exprs)
                              (printf "env: ~a~n" env )
                              
-                             (typeCheck exprs env1 inLoop))
+                             (let ([tCheckVal (typeCheck exprs env1 inLoop)])
+                               (printf "tCheckVal: ~a~n" tCheckVal)
+                             (pop-scope env1)
+                               ;(printf "tCheckVal: ~a~n" (apply-env env tCheckVal))
+                               (cond
+                                 [(apply-env env tCheckVal)]
+                                 [else (error "Referring to something out of scope in a let expression")])))
                            ]
 
     ;If Expressions
@@ -547,13 +553,13 @@ in d.p.x + 5 end") (types:make-IntType))
 ;-- you can comment out until the array section to test these later
 ;;;;
 
-;(check-error (tc-str "
-;let
-;  define e kind as { int x }
-;  ni e x is e { x is 7 }
-;in
-;  x
-;end"))
+(check-error (tc-str "
+let
+  define e kind as { int x }
+  ni e x is e { x is 7 }
+in
+  x
+end"))
 ;(check-error (tc-str "
 ;let
 ;  define color kind as { int r, int g, int b }
