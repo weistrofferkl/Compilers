@@ -189,6 +189,7 @@
     (expression
      ;Boolean Expressions first
      [(boolExpression) $1])
+    
 
     ;Math Expressions: With Prescidence 
     (mathExpression
@@ -211,7 +212,7 @@
 
    ;Boolean Expressions
   (boolExpression
-      [(logicExpression EQ logicExpression) (BoolExpr $1 'eq $3)]
+      [(boolExpression EQ logicExpression) (BoolExpr $1 'eq $3)]
       [(logicExpression NE logicExpression) (BoolExpr $1 'ne $3)]
       [(logicExpression LT logicExpression) (BoolExpr $1 'lt $3)]
       [(logicExpression GT logicExpression) (BoolExpr $1 'gt $3)]
