@@ -68,16 +68,20 @@
     ;[(types:PengType? (string->symbol(FieldAssign-name(first assignments)))) (recordSearch (rest assignments) env recTy (rest recTyFields) inLoop)]))
 
 (define (funSearch pars env funTy funTyFields inLoop)
-  ;(printf "FunLen: ~a~n" (length funTyFields))
+  (printf "FunRettype: ~a~n"(types:FunValue-return-type funTy))
   (cond
     [(and(null? pars) (null? funTyFields)) (types:FunValue-return-type funTy)]
     [(not(equal? (length pars) (length funTyFields))) (error "Lengths not equal")]
     ; want to ask if the first name in the FieldAssign matches the first name in the NameTypePair, AND
     ; if the typechecked expression in the first FieldAssign matches the type of the first NameTypePair
-    [(equal? (typeCheck (first pars) env inLoop) (types:NiType-actual (first funTyFields)))
-
-             (funSearch (rest pars) env funTy (rest funTyFields) inLoop)]
-    [else (error "Funsearch broke")]))
+    [(correctComparison (types:actual-type(typeCheck (first pars) env inLoop)) (types:actual-type(types:NiType-actual (first funTyFields))))
+     (begin
+      ; (printf "~n~nfirsttype: ~a, second type: ~a~n" (typeCheck (first pars) env inLoop) (types:actual-type(types:NiType-actual (first funTyFields))))
+       (funSearch (rest pars) env funTy (rest funTyFields) inLoop))]
+    [else
+     (begin
+       (printf "~n~n******firsttype: ~a,~n******second type: ~a~n" (typeCheck (first pars) env inLoop) (types:actual-type(types:NiType-actual (first funTyFields))))
+       (error "Funsearch broke"))]))
 
 ;Used in FunDecls --> Push Scope, extend environment for arguments, return body type
 (define (enterNewScope funName args rettype body env)
@@ -123,13 +127,17 @@
       )))
 
 (define (typeCheckFun decl env inLoop)
+  (let ([nameList '()])
   (funForEach (lambda (decl)
+               ; (set! nameList (cons (string->symbol name) nameList))
                 ;create a list of NameType Pairs from the fieldType list of each FunDecl
                 ;make sure the types of those parameters are valid (apply-env)
                 ;make sure rettype is valid
                 ;add FunValue to current Env.
                 (match decl
                   [(FunDecl name args rettype body next)
+                   
+                    (set! nameList (cons (string->symbol name) nameList))
                 ;   (printf "Fields: ~a~n" (nameFields args env))
                 
                 (let ([nameList (nameFields args env)]
@@ -142,6 +150,11 @@
                  ; (printf "FunVal: ~a~n" (apply-env env (string->symbol name))))
 
                   )]))decl)
+
+    (printf "NameList: ~a~n" nameList)
+    (cond
+      [(equal? (nameUnique nameList) #t)]
+      [else (error "NOT A UNIQUE NAME")]))
                   ;(cond
                    ; [(and (equal? (typeCheck body env) rTy) (equal? (apply-env env nameList) rTy))(extend-env env (types:FunValue args rettype))]
                     ;[else (error "Error Thrown in first walk for typeCheckFun")])))decl)
@@ -169,33 +182,61 @@
 
                       
                  ; (extend-env newScopeEnv name (types:FunValue-parameters funTy))
-                  (equal? (typeCheck body newScopeEnv inLoop) rTy)
+                  (if (equal? (typeCheck body newScopeEnv inLoop) rTy) rTy (error "Not equal to return type"))
                   
               )]))decl))
+
+(define (nameUnique nameList)
+  (if (empty? nameList) #t
+      (begin
+        (if (equal? (member (first nameList) (rest nameList)) #f) (nameUnique (rest nameList)) #f))))
+        
              
-(define (typeCheckTD decl env)
+(define (typeCheckTD decl env name)
+  (let ([ARFlag #f]
+        [nameList '()]
+        [multiF #f])
   (modForEach (lambda (type)
                ; (printf "TYPE1: ~a~n" type)
+               ; (set! nameList (cons (string->symbol name) nameList))
                 (match type
-                  
-                  [(NameType name kind next) (extend-env env (string->symbol name) (types:make-NameType '()))]
-                  [(ArrayType name kind next) (extend-env env (string->symbol name) (types:make-NameType '()))]
-                  [(RecordType name fields next) (extend-env env (string->symbol name) (types:make-NameType '()))])) decl)
+                 ; (set! nameList (cons (string->symbol name) nameList))
+                  [(NameType name kind next)
+                   (begin
+                     (cond [(not(empty? next)) (set! multiF #t)])
+                     (set! nameList (cons (string->symbol name) nameList))
+                     (extend-env env (string->symbol name) (types:make-NameType '())))]
+                  [(ArrayType name kind next)  (set! nameList (cons (string->symbol name) nameList))(extend-env env (string->symbol name) (types:make-NameType '()))]
+                  [(RecordType name fields next)  (set! nameList (cons (string->symbol name) nameList))(extend-env env (string->symbol name) (types:make-NameType '()))]))
+              decl)
+    (printf "NameList: ~a~n" nameList)
+    
+  ;  (foldl (lambda (name last)
+   ;         (if (not(equal? (member name nameList) #f)) #t (error "MEMBER ERROR"))) #f nameList))
+    (cond
+      [(equal? (nameUnique nameList) #t)]
+      [else (error "NOT A UNIQUE NAME")])
+  
+       
   (modForEach (lambda (type)
-               ; (printf "TYPE2: ~a~n" type)
+                (printf "TYPE2: ~a~n" type)
                 (match type
                   
                   [(RecordType name fields next)
                    (let ([recTy (apply-env env (string->symbol name))])
-                     (types:set-NiType-actual! recTy (makeRecType name fields next env)))]
+                     (types:set-NiType-actual! recTy (makeRecType name fields next env))
+                     (set! ARFlag #t))]
 
                   [(ArrayType name kind next)
                    (let ([arrTy (apply-env env (string->symbol name))])
-                     (types:set-NiType-actual! arrTy (makeArrType name kind next env)))]
+                     (types:set-NiType-actual! arrTy (makeArrType name kind next env))
+                     (set! ARFlag #t))]
 
                   [(NameType name kind next)
                    (let ([nameTy (apply-env env (string->symbol name))])
-                     (types:set-NiType-actual! nameTy (makeNType name kind next env)))]))decl))
+                     (types:set-NiType-actual! nameTy (makeNType name kind next env)))])
+                )decl)
+  (if (and (equal? ARFlag #f) (equal? multiF #t)) (error "ARFLAG ERROR") #t)))
 
               
 (define (makeRecType name fields next env)
@@ -236,8 +277,8 @@
 ;Break only in With/While, With (Read-only var), PengExpr(null) 
 
 
-;FILES: 
-;Error Test: test38, test39, test40, test54
+;FILES: test02
+;Error Test: test40
 
 ;Recursive
 (define (typeCheck ast env inLoop)
@@ -258,18 +299,18 @@
     ;NameType
     ;[(NameType name kind next) (let ([nameSym (string->symbol name)])
                               ;   (extend-env env nameSym (types:actual-type(apply-env env (string->symbol kind)))))]
-    [(NameType name kind next) (typeCheckTD ast env)]
+    [(NameType name kind next) (typeCheckTD ast env name)]
 
     ;RecordType
    ; [(RecordType name fields next) (let ([nameSym (string->symbol name)])
                                         
                                      ;(extend-env env nameSym (types:make-RecordType (nameFields fields env))))]
-    [(RecordType name fields next) (typeCheckTD ast env)]
+    [(RecordType name fields next) (typeCheckTD ast env name)]
                  
     ;ArrayType
     ;[(ArrayType name kind next) (let ([nameSym (string->symbol name)])
                                   ;(extend-env env nameSym (types:make-ArrayType (apply-env env (string->symbol kind)))))]
-    [(ArrayType name kind next) (typeCheckTD ast env)]
+    [(ArrayType name kind next) (typeCheckTD ast env name)]
 
     ;Numbers
     [(NumExpr val) (types:make-IntType)]
@@ -472,8 +513,9 @@
     [(FuncallExpr name args);(begin (printf "env in FunCall : ~a~n" env)
      (let ([id (apply-env env (string->symbol name))]
                                    [argList (typeCheck args env inLoop)])
-       ;(printf "ID ~a, name ~a~n" id name)
-                               (funSearch args env id (types:FunValue-parameters id) inLoop)  
+       (printf "ARGLIST ~a~n" argList)
+                               (funSearch args env id (types:FunValue-parameters id) inLoop)
+       
                                )]
                                  
                                         
