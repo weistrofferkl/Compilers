@@ -68,7 +68,7 @@
     ;[(types:PengType? (string->symbol(FieldAssign-name(first assignments)))) (recordSearch (rest assignments) env recTy (rest recTyFields) inLoop)]))
 
 (define (funSearch pars env funTy funTyFields inLoop)
-  (printf "FunRettype: ~a~n"(types:FunValue-return-type funTy))
+ ; (printf "FunRettype: ~a~n"(types:FunValue-return-type funTy))
   (cond
     [(and(null? pars) (null? funTyFields)) (types:FunValue-return-type funTy)]
     [(not(equal? (length pars) (length funTyFields))) (error "Lengths not equal")]
@@ -80,7 +80,7 @@
        (funSearch (rest pars) env funTy (rest funTyFields) inLoop))]
     [else
      (begin
-       (printf "~n~n******firsttype: ~a,~n******second type: ~a~n" (typeCheck (first pars) env inLoop) (types:actual-type(types:NiType-actual (first funTyFields))))
+     ;  (printf "~n~n******firsttype: ~a,~n******second type: ~a~n" (typeCheck (first pars) env inLoop) (types:actual-type(types:NiType-actual (first funTyFields))))
        (error "Funsearch broke"))]))
 
 ;Used in FunDecls --> Push Scope, extend environment for arguments, return body type
@@ -151,7 +151,7 @@
 
                   )]))decl)
 
-    (printf "NameList: ~a~n" nameList)
+    ;(printf "NameList: ~a~n" nameList)
     (cond
       [(equal? (nameUnique nameList) #t)]
       [else (error "NOT A UNIQUE NAME")]))
@@ -209,7 +209,7 @@
                   [(ArrayType name kind next)  (set! nameList (cons (string->symbol name) nameList))(extend-env env (string->symbol name) (types:make-NameType '()))]
                   [(RecordType name fields next)  (set! nameList (cons (string->symbol name) nameList))(extend-env env (string->symbol name) (types:make-NameType '()))]))
               decl)
-    (printf "NameList: ~a~n" nameList)
+    ;(printf "NameList: ~a~n" nameList)
     
   ;  (foldl (lambda (name last)
    ;         (if (not(equal? (member name nameList) #f)) #t (error "MEMBER ERROR"))) #f nameList))
@@ -219,7 +219,7 @@
   
        
   (modForEach (lambda (type)
-                (printf "TYPE2: ~a~n" type)
+             ;   (printf "TYPE2: ~a~n" type)
                 (match type
                   
                   [(RecordType name fields next)
@@ -400,14 +400,14 @@
        (match name
          [(VarExpr name)(if (eq?(types:VarValue-readOnly (apply-env env (string->symbol name))) #t) (error "ASSERROR")
                             (begin
-                              (printf "correctComparison ~a~n" (correctComparison t1 t2))
+                            ;  (printf "correctComparison ~a~n" (correctComparison t1 t2))
                                                           (cond
                                                             [(correctComparison t1 t2) (types:make-VoidType)]
                                                             [(types:PengType? t2) (types:make-VoidType)]
                                                             [else (error "ASSEXPR SUCKS")])))]
          [_
        
-         (printf "correctComparison ~a~n" (correctComparison t1 t2))
+       ;  (printf "correctComparison ~a~n" (correctComparison t1 t2))
        (cond
          
          [(correctComparison t1 t2) (types:make-VoidType)]
@@ -425,9 +425,9 @@
                                          [arrExp (typeCheck expr env inLoop)]
                                          [arrKind (apply-env env kind)])
                                      
-                                    (printf "arrnameEleType: ~a~n" (types:ArrayType-element-type (types:actual-type arrName)))
-                                     (printf "expr: ~a~n" arrExp)
-                                    (printf "kind: ~a~n" (typeCheck kind env inLoop)) 
+                                  ;  (printf "arrnameEleType: ~a~n" (types:ArrayType-element-type (types:actual-type arrName)))
+                                   ;  (printf "expr: ~a~n" arrExp)
+                                    ;(printf "kind: ~a~n" (typeCheck kind env inLoop)) 
                                      (cond
                                        ;[(and(and (types:ArrayType? arrName) (types:IntType? arrExp)) (NumExpr-val kind)) arrName]
                                        [(and (and (types:ArrayType? (types:actual-type arrName))(types:IntType? arrExp))
@@ -453,7 +453,7 @@
                                  (extend-env env (string->symbol id) (types:VarValue t1 #f)))]
                                 [(and (types:RecordType? (apply-env env (string->symbol type)))  (types:PengType? t1)) (types:make-VoidType)]
                                 
-                                [else ((printf "THING: ~a~n" (types:actual-type (apply-env env (string->symbol type))))(error "ERMERGRD"))]))]
+                                [else ( (types:actual-type (apply-env env (string->symbol type)))(error "ERMERGRD"))]))]
 
     ;Function Declaration:  (enterNewScope args rettype body env)
     ;Collect name, parameters, store them in environment (FunValue)
@@ -513,7 +513,7 @@
     [(FuncallExpr name args);(begin (printf "env in FunCall : ~a~n" env)
      (let ([id (apply-env env (string->symbol name))]
                                    [argList (typeCheck args env inLoop)])
-       (printf "ARGLIST ~a~n" argList)
+   ;    (printf "ARGLIST ~a~n" argList)
                                (funSearch args env id (types:FunValue-parameters id) inLoop)
        
                                )]
