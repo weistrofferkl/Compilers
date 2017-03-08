@@ -1,7 +1,7 @@
 #lang racket
 
 (require "errors.rkt"
-         "niparser.rkt"
+         "Project2.rkt"
          (prefix-in lex: parser-tools/lex)
          test-engine/racket-tests)
 

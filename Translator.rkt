@@ -1,6 +1,6 @@
 #lang racket
 
-(require "llvm-emitter.rkt"
+(require "Emitter.rkt"
          "names.rkt"
          (prefix-in t: "Project3Types.rkt")
          "Project2.rkt" ;parser
@@ -17,11 +17,11 @@
     (if (error-generated?)
         (error "cannot translate due to scan or parse error")
         (let ([ty (typecheck-ast ast)])
-         (if (error-generated?)
-             (error "cannot translate due to type error")
-             (begin
-               (ast->llvm (first ast))
-               (finish-emission)))))))
+          (if (error-generated?)
+              (error "cannot translate due to type error")
+              (begin
+                (ast->llvm (first ast))
+                (finish-emission)))))))
 
   
 (define (translate-str str)
@@ -60,13 +60,16 @@
     ;[(VarDecl _ _ _) (vardecl->llvm ast)]
     
     ; function calls
-    ;[(FuncallExpr _ _) (funcall->llvm ast)]
+    [(FuncallExpr _ _) (funcall->llvm ast)]
        
     ; variable expressions
     ;[(VarExpr _) (var->llvm ast)]
 
     ; let expressions--need these for any declarations to work!
     ;[(LetExpr _ _) (letexpr->llvm ast)]
+
+    ;Math Expression
+    [(MathExpr V1 op V2) (mathexpr->llvm ast V1 op V2)]
     
     [_ (error "Translation node " ast " not implemented yet!")]))        
 
@@ -74,5 +77,28 @@
 (define (numexpr->llvm node val)
   ; literal nums can go in registers
   (let ([result (emit-math 'add val "0")])
-    (add-note node 'result result)))          
-    
+    (add-note node 'result result)))
+
+(define (mathexpr->llvm node v1 op v2)
+  (ast->llvm v1)
+  (ast->llvm v2)
+  
+  (let* ([var1 (get-note v1 'result)]
+         [var2 (get-note v2 'result)]
+         [result (emit-math op var1 var2)])
+    (add-note node 'result result)))
+
+;parameters, function call that uses those parameter names
+(define (funcall->llvm node)
+  (match node
+    [(FuncallExpr name args)
+     (let ([results 
+            (map (lambda (arg)
+                   (ast->llvm args)
+                   (get-note arg 'result)) args)]
+           [types
+            (map (lambda (arg)
+                   (ast->llvm args)
+                   (get-note arg 'type))args)])
+     
+       (emit-funcall name results types (get-note node 'type)))]))

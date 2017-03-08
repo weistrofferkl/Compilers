@@ -7,6 +7,9 @@
 (define parse-error (make-parameter #t))
 (define type-error (make-parameter #t))
 
+(define (error-generated?)
+  (or (scan-error) (parse-error) (type-error)))
+
 ; clears all the errors 
 (define (clear-errors)
   (scan-error #f)

@@ -1,13 +1,36 @@
 #lang racket
 (require "Project2.rkt"
          "Project3Env.rkt"
+         "errors.rkt"
+         "log.rkt"
          (prefix-in types: "Project3Types.rkt"))
 (require test-engine/racket-tests)
 (provide (all-defined-out))
 
 (define (tc-file filename)
   (tc-str (file->string filename)))
-         
+
+(define (init-typeEnv)
+  (let ([env (empty-env)])
+    (extend-env env 'int (types:make-IntType))
+    (extend-env env 'string (types:make-StringType))
+    (extend-env env 'bool (types:make-BoolType))
+    (extend-env env 'peng (types:make-PengType))
+    (extend-env env 'print (types:FunValue (list (types:NameTypePair (types:make-StringType) 's )) (types:make-VoidType)))
+    (extend-env env 'printi (types:FunValue (list (types:NameTypePair (types:make-IntType) 'x))(types:make-VoidType)))
+    (extend-env env 'flush (types:FunValue '() (types:make-VoidType)))
+    (extend-env env 'getChar (types:FunValue '() (types:make-StringType)))
+    (extend-env env 'ord (types:FunValue (list (types:NameTypePair (types:make-StringType) 's )) (types:make-IntType)))
+    (extend-env env 'chr (types:FunValue(list (types:NameTypePair (types:make-IntType) 's )) (types:make-StringType)))
+    (extend-env env 'size (types:FunValue (list (types:NameTypePair (types:make-StringType) 's )) (types:make-IntType)))
+    (extend-env env 'substring (types:FunValue(list (types:NameTypePair (types:make-StringType) 's ) (types:NameTypePair (types:make-IntType) 'first)
+                                                    (types:NameTypePair (types:make-IntType) 'n)) (types:make-StringType)))
+    (extend-env env 'concat (types:FunValue (list(types:NameTypePair (types:make-StringType) 's1) (types:NameTypePair (types:make-StringType) 's2))
+                                            (types:make-StringType)))
+    (extend-env env 'not (types:FunValue (types:NameTypePair (types:make-BoolType) 'i) (types:make-IntType)))
+    (extend-env env 'exit (types:FunValue (types:NameTypePair (types:make-IntType) 'i) (types:make-IntType)))
+    env))
+    
 (define (tc-str str)
   (let ([env (empty-env)])
     (extend-env env 'int (types:make-IntType))
@@ -280,6 +303,21 @@
 ;FILES: test02
 ;Error Test: test40
 
+(define (typecheck-ast ast)
+  (let ([typeEnv (init-typeEnv)])
+  ; don't clear errors in case we forgot to for some reason...
+    (if (error-generated?)
+        (cond
+          [(eq? (scan-error) #t) (error "cannot continue after scanning errors")]
+          [(eq? (parse-error) #t) (error "cannot continue after parsing errors")]
+          [else (error "compiler error! help!")])
+        (let ([ty (typeCheck ast typeEnv #f)])
+          (cond
+            [(eq? (scan-error) #t) (error "cannot continue after scanning errors")]
+            [(eq? (parse-error) #t) (error "cannot continue after parsing errors")]
+            [(eq? (type-error) #t) (error "cannot continue after type errors")])
+          ty))))
+  
 ;Recursive
 (define (typeCheck ast env inLoop)
  ;(printf "typeCheck with ~a~n~n" (object-name ast))
@@ -288,7 +326,9 @@
     ['() (types:make-VoidType)]
     ;Break Expression
     [(BreakExpr) (if (equal? inLoop #t) (types:make-VoidType) (error "Breaking outside of a loop!"))]
-    [(PengExpr) (types:make-PengType)]
+    [(PengExpr) (let ([ty (types:make-PengType)])
+                  (add-note ast 'type ty)
+                  ty)]
     ;List with one element, List with 1+ element
     [(list expr) (typeCheck expr env inLoop)] 
     [(cons e1 e2)(begin
@@ -313,11 +353,17 @@
     [(ArrayType name kind next) (typeCheckTD ast env name)]
 
     ;Numbers
-    [(NumExpr val) (types:make-IntType)]
+    [(NumExpr val) (let ([ty (types:make-IntType)])
+                     (add-note ast 'type ty)
+                     ty)]
     ;No Value
-    [(NoVal) (types:make-VoidType)]
+    [(NoVal) (let ([ty (types:make-VoidType)])
+               (add-note ast 'type ty)
+               ty)]
     ;Strings
-    [(StringExpr str) (types:make-StringType)]
+    [(StringExpr str) (let ([ty (types:make-StringType)])
+                        (add-note ast 'type ty)
+                        ty)]
     ;Array Expression (BracketAccess):
     ;(typeCheck expr env)
     [(ArrayExpr name expr) (let* ([nameAr (typeCheck name env inLoop)] ;(string->symbol expr)
@@ -514,7 +560,12 @@
      (let ([id (apply-env env (string->symbol name))]
                                    [argList (typeCheck args env inLoop)])
    ;    (printf "ARGLIST ~a~n" argList)
-                               (funSearch args env id (types:FunValue-parameters id) inLoop)
+       (let ([funStore 
+                               (funSearch args env id (types:FunValue-parameters id) inLoop)])
+         (printf "~a " funStore)
+         (add-note ast 'type funStore)
+         funStore)
+
        
                                )]
                                  

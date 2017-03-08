@@ -7,6 +7,32 @@
 (require "Project1.rkt")
 (provide (all-defined-out))
 
+(define annotations (make-parameter (make-hasheq)))
+; we can add notes to a node with a symbol and a value
+; generally, the sym should be something like 'position, or 'type
+(define (add-note node sym item)
+  (let ([notes (if (hash-has-key? (annotations) node)
+                (hash-ref (annotations) node)
+                (let ([newhash (make-hash)])
+                  (hash-set! (annotations) node newhash)
+                  newhash))])
+    (hash-set! notes sym item)))
+
+; this retrieves a note on a node from the annotations 
+(define (get-note node sym)
+  (if (hash-has-key? (annotations) node)
+      (let ([node-ht (hash-ref (annotations) node)])
+        (if (hash-has-key? node-ht sym)
+            (hash-ref node-ht sym)
+            (let ([errorstr (open-output-string)])
+              (fprintf errorstr "Unable to find ~a as an annotation for ~a~n"
+                       sym node)
+              (error (get-output-string errorstr)))))
+        (let ([errorstr (open-output-string)])
+          (fprintf errorstr "Unable to find any annotations for ~a~n"
+                   node)
+          (error (get-output-string errorstr)))))
+                                
 
 (struct Peng () #:transparent)
 
