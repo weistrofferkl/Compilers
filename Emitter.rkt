@@ -238,18 +238,69 @@
 ;name results return-type types of all results
 ;call rettype funName(argTy, argRes)
 
+;Emit Boolean Exprs
+(define (boolsym? sym)
+  (and (symbol? sym) (or (eq? sym 'eq) (eq? sym 'ne) (eq? sym 'lt) (eq? sym 'gt) (eq? sym 'le) (eq? sym 'ge))))
+
+(define (emit-bool boolsym v1 v2 [result (make-temp-result)] )
+  (let ([v1str (if (Result? v1) (result->string v1) v1)]
+        [v2str (if (Result? v2) (result->string v2) v2)])
+    (let ([resstr (result->string result)]
+          [tyname "i64 "])
+      (cond     
+      [(eq? boolsym 'eq) (println resstr " = icmp eq " tyname v1str ", " v2str)]
+      [(eq? boolsym 'ne) (println resstr " = icmp ne " tyname v1str ", " v2str)]
+      [(eq? boolsym 'lt) (println resstr " = icmp slt " tyname v1str ", " v2str)]
+      [(eq? boolsym 'gt) (println resstr " = icmp sgt " tyname v1str ", " v2str)]
+      [(eq? boolsym 'le) (println resstr " = icmp sle " tyname v1str ", " v2str)]
+      [(eq? boolsym 'ge) (println resstr " = icmp sge " tyname v1str ", " v2str)]
+      [else (raise-arguments-error 'emit-bool "boolsym must be 'eq, 'ne, 'lt, 'gt, 'le, or 'ge"
+                                     "boolsym" boolsym)]) result)))
+
+;Emit Logic Exprs
+(define (logicsym? sym)
+  (and (symbol? sym) (or (eq? sym 'or) (eq? sym 'and))))
+
+(define (emit-logic logicsym v1 v2 [result (make-temp-result)] )
+  (let ([v1str (if (Result? v1) (result->string v1) v1)]
+        [v2str (if (Result? v2) (result->string v2) v2)])
+    (let ([resstr (result->string result)]
+          [tyname "i64 "])
+      (cond     
+      [(eq? logicsym 'eq) (println resstr " = or " tyname v1str ", " v2str)]
+      [(eq? logicsym 'ne) (println resstr " = and " tyname v1str ", " v2str)]
+      
+      [else (raise-arguments-error 'emit-logic "logicsym must be 'or, or 'and"
+                                     "logicsym" logicsym)]) result)))
+
+(define (emit-varDecl noderettype type id expr)
+  (emit-comment ("declaring a var"))
+
+  (let* ([result (make-label-result)]
+         [struStr (result->string noderettype)]
+         [resstr (result->string result)])
+
+
+         (println resstr " = add i64, " id ", 0")
+         (println struStr " = alloca i64, align 8")
+         (println "store i64 " resstr", i64* " struStr)
+         ))
+  
+
+
+;Emit Function Calls
 (define (emit-funcall name results types rettype)
   (emit-comment (string-append "calling function: " name))
   
-  (printf "~n VoidType? ~a" (VoidType? rettype))
-  (printf "~n rettype? ~a" rettype)
-  (printf "~n OR ~a" (or (VoidType? rettype) (eq? rettype #f)))
+  ;(printf "~n VoidType? ~a" (VoidType? rettype))
+  ;(printf "~n rettype? ~a" rettype)
+  ;(printf "~n OR ~a" (or (VoidType? rettype) (eq? rettype #f)))
   
   (let ([result (if (VoidType? rettype) #f (make-temp-result))])
     (printf "~n Result ~a" result)
   (cond
-    [(not(eq? #f result)
-         (print (result->string result) " = "))]
+    [(not(eq? #f result))
+         (print (result->string result) " = ")]
     )
     (print "call " (get-type-name rettype) " @"name "( " )
     ;for-each passed two lists (results and types)
@@ -265,7 +316,24 @@
                 ) types results))
     (println " )")
               
-    ))    
+    ))
+
+ ;Strings 
+(define (emit-literal-string val)
+  (begin-global-defn)
+  (let* ([result (make-global-result)]
+         [struc (make-global-result)]
+        [valStr(if (Result? val) (result->string val) val)]
+        [isoStr (substring valStr 1 (- (string-length valStr) 1))]
+        [llvmStr (string-append (substring valStr 0 (- (string-length valStr)1)) "\\00\"")]
+        [len (string-length isoStr)]
+        [resstr (result->string result)]
+        [strucStr (result->string struc)])
+    
+    (println resstr " = global [" (number->string (+ len 1)) " x i8] c" llvmStr", align 1")
+    (println strucStr " = global %struct.string { i64 " (number->string len) ", i8* getelementptr inbounds([" (number->string (+ len 1)) " x i8], [" (number->string (+ len 1))" x i8]* " resstr", i32 0, i32 0)}, align 8")
+  (end-global-defn) struc))
+  
 
 (define (get-type-name nitype)
   (let ([ty (actual-type nitype)])

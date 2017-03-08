@@ -2,10 +2,7 @@
 
 (require "Project3Types.rkt")
 
-(provide Temp Label Result make-label make-temp reset-names
-         make-temp-result make-label-result result->string
-         in-register? in-frame? global? set-global! Result?
-         result->string)
+(provide (all-defined-out))
 
 (define temp-num (make-parameter 0))
 (define label-num (make-parameter 0))
@@ -56,6 +53,10 @@
 ; get a new temp
 (define (make-temp [num (begin (temp-num (add1 (temp-num))) (temp-num))])
   (Temp (string-append "t" (number->string num)) num))
+
+;construct a global
+(define (make-global-result)
+  (Result (make-label) #t #f))
 
 ; construct a label result
 (define (make-label-result)

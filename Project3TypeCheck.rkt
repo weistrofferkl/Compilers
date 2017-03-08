@@ -319,7 +319,9 @@
           ty))))
   
 ;Recursive
+
 (define (typeCheck ast env inLoop)
+  (let ([typeNote
  ;(printf "typeCheck with ~a~n~n" (object-name ast))
   (match ast
     ;Empty List --> VoidType
@@ -408,8 +410,12 @@
                                [t2 (typeCheck e2 env inLoop)])
                            ;(printf "~n~ne1 and e2 ~a~a~n" e1 e2)
                            (if (and (types:IntType? t1) (types:IntType? t2))
-                               (types:make-IntType)
-                               (error "Type Mismatch in MathExpression")))]
+                               (begin
+                                 (add-note ast 'type (types:IntType '()))
+                               (types:make-IntType))
+                               (error "Type Mismatch in MathExpression")))
+                         
+                         ]
 
     ;Boolean Expressions:
     [(BoolExpr e1 op e2) (let ([t1 (typeCheck e1 env inLoop)]
@@ -577,7 +583,7 @@
         (display ast)
      (error "Node not implemented yet!"))]
     
-    ))
+    )]) (add-note ast 'type typeNote) typeNote))
 
 ; noval
 (check-expect (tc-str "()") (types:make-VoidType))

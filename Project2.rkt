@@ -128,7 +128,7 @@
    (grammar
 
     (program ;list of expressions or list of declarations
-     [(expression program) (cons $1 $2)]
+     ;[(expression program) (cons $1 $2)]
      [(decl program) (cons $1 $2)]
      [(expression) (list $1)]
      [(decl) $1] 
@@ -229,6 +229,7 @@
       [(term DIV factor) (MathExpr $1 '/ $3)]
       [(factor) $1]
       )
+    
     (factor
      [(simple-expression) $1] ; simple-expression
      )
@@ -262,7 +263,10 @@
   (assExpr
       [(NOW LValue IS expression) (AssignmentExpr $2 $4)]
       [(logicExpression) $1])
-    
+
+ ; (Fun-simple-expr
+  ; [(ID LPAREN functPars RPAREN) (FuncallExpr $1 $3)]
+   ;[(simple-expression) $1])
 
      (simple-expression
       [(NUM) (NumExpr $1)]

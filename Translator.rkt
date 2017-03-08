@@ -47,6 +47,8 @@
 
 (define (ast->llvm ast)
   (match ast
+    ;Boolean Expr, Logic Expr, branching
+    
     ; deal with lists, like in let expressions
     ['() '()]
     [(cons first rest) (begin (ast->llvm first) (ast->llvm rest))]
@@ -54,19 +56,25 @@
     ; integer literals
     [(NumExpr val) (numexpr->llvm ast val)]
 
-    ;[(StringExpr val) (stringexpr->llvm ast val)]
+    ;Booleans
+    [(BoolExpr V1 op V2) (boolexpr->llvm ast V1 op V2)]
+
+    ;Logics
+    [(LogicExpr V1 op V2) (logicexpr->llvm ast V1 op V2)]
+
+    [(StringExpr val) (stringexpr->llvm ast val)]
 
     ; variable declarations!
-    ;[(VarDecl _ _ _) (vardecl->llvm ast)]
+    [(VarDecl _ _ _) (vardecl->llvm ast)]
     
     ; function calls
     [(FuncallExpr _ _) (funcall->llvm ast)]
        
     ; variable expressions
-    ;[(VarExpr _) (var->llvm ast)]
+  ;  [(VarExpr _) (var->llvm ast)]
 
     ; let expressions--need these for any declarations to work!
-    ;[(LetExpr _ _) (letexpr->llvm ast)]
+    [(LetExpr _ _) (letexpr->llvm ast)]
 
     ;Math Expression
     [(MathExpr V1 op V2) (mathexpr->llvm ast V1 op V2)]
@@ -79,6 +87,33 @@
   (let ([result (emit-math 'add val "0")])
     (add-note node 'result result)))
 
+;Let Expressions
+(define (letexpr->llvm node)
+  (match node
+      [(LetExpr decls exprs)
+       (begin
+         (let ([declsRet (ast->llvm decls)]
+         [exprsRet (ast->llvm exprs)])
+           
+         (add-note node 'result (get-note (last exprs) 'result))
+           ))]))
+  
+
+;VarDecls
+(define (vardecl->llvm node)
+  (match node
+    [(VarDecl type id expr)
+     (begin
+       (let* ([nodeRet (ast->llvm node)]
+              [emitRet (emit-varDecl (get-note nodeRet 'result) type id expr)])
+         (add-note node 'result emitRet))
+        )]))
+  
+(define (stringexpr->llvm node val)
+  (let ([result (emit-literal-string val)])
+    (add-note node 'result result)))
+
+;Math Expressions
 (define (mathexpr->llvm node v1 op v2)
   (ast->llvm v1)
   (ast->llvm v2)
@@ -86,6 +121,26 @@
   (let* ([var1 (get-note v1 'result)]
          [var2 (get-note v2 'result)]
          [result (emit-math op var1 var2)])
+    (add-note node 'result result)))
+
+;Boolean Expressions
+(define (boolexpr->llvm node v1 op v2)
+  (ast->llvm v1)
+  (ast->llvm v2)
+
+  (let* ([var1 (get-note v1 'result)]
+         [var2 (get-note v2 'result)]
+         [result (emit-bool op var1 var2)])
+    (add-note node 'result result)))
+
+;Logic Expressions
+(define (logicexpr->llvm node v1 op v2)
+  (ast->llvm v1)
+  (ast->llvm v2)
+
+  (let* ([var1 (get-note v1 'result)]
+         [var2 (get-note v2 'result)]
+         [result (emit-logic op var1 var2)])
     (add-note node 'result result)))
 
 ;parameters, function call that uses those parameter names
@@ -98,7 +153,7 @@
                    (get-note arg 'result)) args)]
            [types
             (map (lambda (arg)
-                   (ast->llvm args)
+                   ;(ast->llvm args)
                    (get-note arg 'type))args)])
      
        (emit-funcall name results types (get-note node 'type)))]))
