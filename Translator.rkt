@@ -104,11 +104,14 @@
   (match node
     [(VarDecl type id expr)
      (begin
-       (let* ([nodeRet (ast->llvm node)]
-              [emitRet (emit-varDecl (get-note nodeRet 'result) type id expr)])
+       (printf "~n HELLO FROM VARDECL ")
+       (let* ([nodeRet (ast->llvm expr)]
+              [emitRet (emit-varDecl type id (get-note expr 'result))])
+         (printf "~n HELLO FROM VARDECL 2")
          (add-note node 'result emitRet))
         )]))
-  
+
+;String Expressions
 (define (stringexpr->llvm node val)
   (let ([result (emit-literal-string val)])
     (add-note node 'result result)))
@@ -156,4 +159,4 @@
                    ;(ast->llvm args)
                    (get-note arg 'type))args)])
      
-       (emit-funcall name results types (get-note node 'type)))]))
+       (add-note node 'result (emit-funcall name results types (get-note node 'type))))]))

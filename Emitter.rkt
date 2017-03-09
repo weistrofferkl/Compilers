@@ -273,17 +273,17 @@
       [else (raise-arguments-error 'emit-logic "logicsym must be 'or, or 'and"
                                      "logicsym" logicsym)]) result)))
 
-(define (emit-varDecl noderettype type id expr)
-  (emit-comment ("declaring a var"))
+(define (emit-varDecl type id expr)
+  ;(emit-comment ("declaring a var"))
 
   (let* ([result (make-label-result)]
-         [struStr (result->string noderettype)]
+         [struStr (result->string expr)]
          [resstr (result->string result)])
 
 
-         (println resstr " = add i64, " id ", 0")
-         (println struStr " = alloca i64, align 8")
-         (println "store i64 " resstr", i64* " struStr)
+         ;(println resstr " = add i64, " id ", 0")
+         (println resstr " = alloca i64, align 8")
+         (println "store i64 " struStr", i64* " resstr)
          ))
   
 
