@@ -71,13 +71,19 @@
     [(FuncallExpr _ _) (funcall->llvm ast)]
        
     ; variable expressions
-  ;  [(VarExpr _) (var->llvm ast)]
+    [(VarExpr _) (var->llvm ast)]
+
+    ;Assignment Expression
+    [(AssignmentExpr _ _) (assexpr->llvm ast)]
 
     ; let expressions--need these for any declarations to work!
     [(LetExpr _ _) (letexpr->llvm ast)]
+    
 
     ;Math Expression
     [(MathExpr V1 op V2) (mathexpr->llvm ast V1 op V2)]
+
+    
     
     [_ (error "Translation node " ast " not implemented yet!")]))        
 
@@ -90,13 +96,13 @@
 ;Let Expressions
 (define (letexpr->llvm node)
   (match node
-      [(LetExpr decls exprs)
-       (begin
-         (let ([declsRet (ast->llvm decls)]
-         [exprsRet (ast->llvm exprs)])
+    [(LetExpr decls exprs)
+     (begin
+       (let ([declsRet (ast->llvm decls)]
+             [exprsRet (ast->llvm exprs)])
            
          (add-note node 'result (get-note (last exprs) 'result))
-           ))]))
+         ))]))
   
 
 ;VarDecls
@@ -104,12 +110,50 @@
   (match node
     [(VarDecl type id expr)
      (begin
-       (printf "~n HELLO FROM VARDECL ")
+     ;  (printf "~n HELLO FROM VARDECL ")
        (let* ([nodeRet (ast->llvm expr)]
-              [emitRet (emit-varDecl type id (get-note expr 'result))])
-         (printf "~n HELLO FROM VARDECL 2")
-         (add-note node 'result emitRet))
-        )]))
+              [emitRet (emit-varDecl type id (get-note expr 'result))]
+              [varvalue (get-note node 'type)])
+        ; (printf "~n HELLO FROM VARDECL 2")
+         
+         (add-note node 'result emitRet)
+         (t:set-VarValue-result! varvalue emitRet))
+       )]))
+
+;var expression
+(define (var->llvm node)
+  
+  (match node
+    [(VarExpr name)
+     (printf "~n Var Value from VE~a" (t:VarValue name #f)) 
+     (let* ([type (get-note node 'type)]
+            [result (t:VarValue-result (get-note node 'varval))]
+            [emitRet (emit-varExpr type result)])
+       (printf "~n Result from Let : ~a" result)
+       (printf "~n EmitRes from Let : ~a" emitRet)
+
+       (add-note node 'result emitRet))]))
+
+
+                        
+
+
+;Assignment Expression
+(define (assexpr->llvm node)
+  (match node
+    [(AssignmentExpr name expr)
+     (let* ([nodeRet(ast->llvm expr)]
+            [emitRet (emit-assign name (get-note expr 'result))]
+            [varvalue  (get-note node 'varval)])
+            ;[varRes (t:VarValue-result varvalue)])
+       (printf "~n HELLO SAYS LE ASSIGNMENT!!!!")
+       (printf "~n Var Value from AssExpr ~a" emitRet)
+       ;(add-note node 'result varvalue) ; was prev. (add-note node 'result emitRet)
+       (add-note node 'result varvalue)
+       (t:set-VarValue-result! varvalue emitRet)
+       )]))
+         
+
 
 ;String Expressions
 (define (stringexpr->llvm node val)
@@ -152,7 +196,8 @@
     [(FuncallExpr name args)
      (let ([results 
             (map (lambda (arg)
-                   (ast->llvm args)
+                   (ast->llvm arg)
+                   
                    (get-note arg 'result)) args)]
            [types
             (map (lambda (arg)

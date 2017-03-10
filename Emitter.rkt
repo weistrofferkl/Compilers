@@ -274,17 +274,39 @@
                                      "logicsym" logicsym)]) result)))
 
 (define (emit-varDecl type id expr)
-  ;(emit-comment ("declaring a var"))
+  (emit-comment "Var Decl")
 
   (let* ([result (make-label-result)]
          [struStr (result->string expr)]
-         [resstr (result->string result)])
-
-
-         ;(println resstr " = add i64, " id ", 0")
+         [resstr (result->string result)])    
          (println resstr " = alloca i64, align 8")
          (println "store i64 " struStr", i64* " resstr)
-         ))
+         result))
+
+;Assignment Expression
+(define (emit-assign name expr)
+  (emit-comment "Assignment Expression")
+  
+  (let* ([result (make-label-result)]
+         [struStr (result->string expr)]
+         [resstr (result->string result)])
+    (printf "~n result-str from emitAssign ~a" result)
+    (printf "~n struStr from emitAssign ~a" struStr)
+    
+    (println "store i64 "struStr", i64* "resstr))) 
+
+;varExpression
+(define (emit-varExpr type res)
+   (emit-comment "Var Expression")
+  (printf "type: ~a, res: ~a~n" type res)
+  (let* ([result (make-temp-result)]
+        
+         [resStr (result->string res)] ;resStr = %L1
+         [struStr (result->string result)]) ;struStr = %t
+    
+    (println struStr " = load i64, i64* " resStr) result))
+
+
   
 
 
@@ -307,7 +329,7 @@
     (let ([count 0]
           [len (length results)])
     (for-each (lambda (ty res)
-                 (printf "~n res ~a" res)
+                 (printf "~n res1 ~a" res)
                 (print (get-type-name ty) " "
                        (result->string res)) ;maybe source of error
                 (cond
@@ -318,7 +340,7 @@
               
     ))
 
- ;Strings 
+ ;Strings TO DO: HANDLE NEW LINES!!!!!
 (define (emit-literal-string val)
   (begin-global-defn)
   (let* ([result (make-global-result)]

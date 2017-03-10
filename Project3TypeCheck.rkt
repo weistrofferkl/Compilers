@@ -53,17 +53,17 @@
     
   
     
-   ; (printf "env: ~a~n" env)
-   (typeCheck (first (parse-str str)) env #f)))
+    ; (printf "env: ~a~n" env)
+    (typeCheck (first (parse-str str)) env #f)))
 ;(printf "envFinal: ~a~n" (typeCheck (first (parse-str str)) env))))
 
 (define (nameFields fields env)
   ;  (printf "fields: ~a~n" fields)
   (map (lambda (field)
-       (types:NameTypePair
-        (apply-env env (string->symbol (TypeField-kind field)))
-        (string->symbol (TypeField-name field))))
-         fields))
+         (types:NameTypePair
+          (apply-env env (string->symbol (TypeField-kind field)))
+          (string->symbol (TypeField-name field))))
+       fields))
 
 (define (findit item lst)
   (cond
@@ -73,7 +73,7 @@
 
 
 (define (recordSearch assignments env recTy recTyFields inLoop)
- ; (printf "assignments ~a~n" assignments)
+  ; (printf "assignments ~a~n" assignments)
   ;(printf "recTyFields ~a~n" recTyFields)
   (cond
     [(and(null? assignments) (null? recTyFields)) recTy]
@@ -81,17 +81,17 @@
     ; want to ask if the first name in the FieldAssign matches the first name in the NameTypePair, AND
     ; if the typechecked expression in the first FieldAssign matches the type of the first NameTypePair
     [(and(equal?(string->symbol(FieldAssign-name(first assignments)))(types:NameTypePair-name(first recTyFields)))
-                 (equal? (typeCheck (FieldAssign-expr(first assignments)) env inLoop) (types:NiType-actual (first recTyFields))))
+         (equal? (typeCheck (FieldAssign-expr(first assignments)) env inLoop) (types:NiType-actual (first recTyFields))))
 
-             (recordSearch (rest assignments) env recTy (rest recTyFields) inLoop)]
+     (recordSearch (rest assignments) env recTy (rest recTyFields) inLoop)]
     [(and(equal?(string->symbol(FieldAssign-name(first assignments)))(types:NameTypePair-name(first recTyFields)))
-                 (types:PengType?(typeCheck(FieldAssign-expr(first assignments)) env inLoop)))
+         (types:PengType?(typeCheck(FieldAssign-expr(first assignments)) env inLoop)))
 
-             (recordSearch (rest assignments) env recTy (rest recTyFields) inLoop)]))
-    ;[(types:PengType? (string->symbol(FieldAssign-name(first assignments)))) (recordSearch (rest assignments) env recTy (rest recTyFields) inLoop)]))
+     (recordSearch (rest assignments) env recTy (rest recTyFields) inLoop)]))
+;[(types:PengType? (string->symbol(FieldAssign-name(first assignments)))) (recordSearch (rest assignments) env recTy (rest recTyFields) inLoop)]))
 
 (define (funSearch pars env funTy funTyFields inLoop)
- ; (printf "FunRettype: ~a~n"(types:FunValue-return-type funTy))
+  ; (printf "FunRettype: ~a~n"(types:FunValue-return-type funTy))
   (cond
     [(and(null? pars) (null? funTyFields)) (types:FunValue-return-type funTy)]
     [(not(equal? (length pars) (length funTyFields))) (error "Lengths not equal")]
@@ -99,11 +99,11 @@
     ; if the typechecked expression in the first FieldAssign matches the type of the first NameTypePair
     [(correctComparison (types:actual-type(typeCheck (first pars) env inLoop)) (types:actual-type(types:NiType-actual (first funTyFields))))
      (begin
-      ; (printf "~n~nfirsttype: ~a, second type: ~a~n" (typeCheck (first pars) env inLoop) (types:actual-type(types:NiType-actual (first funTyFields))))
+       ; (printf "~n~nfirsttype: ~a, second type: ~a~n" (typeCheck (first pars) env inLoop) (types:actual-type(types:NiType-actual (first funTyFields))))
        (funSearch (rest pars) env funTy (rest funTyFields) inLoop))]
     [else
      (begin
-     ;  (printf "~n~n******firsttype: ~a,~n******second type: ~a~n" (typeCheck (first pars) env inLoop) (types:actual-type(types:NiType-actual (first funTyFields))))
+       ;  (printf "~n~n******firsttype: ~a,~n******second type: ~a~n" (typeCheck (first pars) env inLoop) (types:actual-type(types:NiType-actual (first funTyFields))))
        (error "Funsearch broke"))]))
 
 ;Used in FunDecls --> Push Scope, extend environment for arguments, return body type
@@ -130,84 +130,84 @@
 
 (define (modForEach funct decl)
   (if (empty? decl) '()
-  (begin
-    (funct decl)
-    (match decl
-      [(NameType name kind next) (modForEach funct (NameType-next decl))]
-      [(ArrayType name kind next) (modForEach funct (ArrayType-next decl))]
-      [(RecordType name fields next) (modForEach funct (RecordType-next decl))])
-    )))
+      (begin
+        (funct decl)
+        (match decl
+          [(NameType name kind next) (modForEach funct (NameType-next decl))]
+          [(ArrayType name kind next) (modForEach funct (ArrayType-next decl))]
+          [(RecordType name fields next) (modForEach funct (RecordType-next decl))])
+        )))
 
 ;Mutual Recursion: Function For-Each
 ;(nameFields fields env
 
 (define (funForEach funct decl)
   (if (empty? decl) '()
-    (begin
-      (funct decl)
-      (funForEach funct (FunDecl-next decl))
+      (begin
+        (funct decl)
+        (funForEach funct (FunDecl-next decl))
       
-      )))
+        )))
 
 (define (typeCheckFun decl env inLoop)
   (let ([nameList '()])
-  (funForEach (lambda (decl)
-               ; (set! nameList (cons (string->symbol name) nameList))
-                ;create a list of NameType Pairs from the fieldType list of each FunDecl
-                ;make sure the types of those parameters are valid (apply-env)
-                ;make sure rettype is valid
-                ;add FunValue to current Env.
-                (match decl
-                  [(FunDecl name args rettype body next)
+    (funForEach (lambda (decl)
+                  ; (set! nameList (cons (string->symbol name) nameList))
+                  ;create a list of NameType Pairs from the fieldType list of each FunDecl
+                  ;make sure the types of those parameters are valid (apply-env)
+                  ;make sure rettype is valid
+                  ;add FunValue to current Env.
+                  (match decl
+                    [(FunDecl name args rettype body next)
                    
-                    (set! nameList (cons (string->symbol name) nameList))
-                ;   (printf "Fields: ~a~n" (nameFields args env))
+                     (set! nameList (cons (string->symbol name) nameList))
+                     ;   (printf "Fields: ~a~n" (nameFields args env))
                 
-                (let ([nameList (nameFields args env)]
-                      [rTy  (if (equal? rettype #f) (types:make-VoidType)
-                 (begin (apply-env env (string->symbol rettype))))])
-                ;  (begin (printf "Name: ~a~n" name)
+                     (let ([nameList (nameFields args env)]
+                           [rTy  (if (equal? rettype #f) (types:make-VoidType)
+                                     (begin (apply-env env (string->symbol rettype))))])
+                       ;  (begin (printf "Name: ~a~n" name)
                          
                          
-                  (extend-env env (string->symbol name) (types:FunValue nameList rTy))
-                 ; (printf "FunVal: ~a~n" (apply-env env (string->symbol name))))
+                       (extend-env env (string->symbol name) (types:FunValue nameList rTy))
+                       ; (printf "FunVal: ~a~n" (apply-env env (string->symbol name))))
 
-                  )]))decl)
+                       )]))decl)
 
     ;(printf "NameList: ~a~n" nameList)
     (cond
       [(equal? (nameUnique nameList) #t)]
       [else (error "NOT A UNIQUE NAME")]))
-                  ;(cond
-                   ; [(and (equal? (typeCheck body env) rTy) (equal? (apply-env env nameList) rTy))(extend-env env (types:FunValue args rettype))]
-                    ;[else (error "Error Thrown in first walk for typeCheckFun")])))decl)
+  ;(cond
+  ; [(and (equal? (typeCheck body env) rTy) (equal? (apply-env env nameList) rTy))(extend-env env (types:FunValue args rettype))]
+  ;[else (error "Error Thrown in first walk for typeCheckFun")])))decl)
   
   (funForEach (lambda (decl)
                 (match decl
                   [(FunDecl name args rettype body next)
-                ;Push a new Scope
-                ;When eval a function, look it up in the env and extend that env with the parameters of the funct
-                ;typecheck the body and make sure the body return type matches the declared return type
-                (let* ([newScopeEnv (push-scope env)]
-                      [funTy (apply-env env (string->symbol name))]
-                   ;   [rTy  (typeCheck rettype newScopeEnv)])
-                      [rTy  (if (eq? #f rettype) (types:make-VoidType) (apply-env env (string->symbol rettype)))])
+                   ;Push a new Scope
+                   ;When eval a function, look it up in the env and extend that env with the parameters of the funct
+                   ;typecheck the body and make sure the body return type matches the declared return type
+                   (let* ([newScopeEnv (push-scope env)]
+                          [funTy (apply-env env (string->symbol name))]
+                          ;   [rTy  (typeCheck rettype newScopeEnv)])
+                          [rTy  (if (eq? #f rettype) (types:make-VoidType) (apply-env env (string->symbol rettype)))])
 
-                  (for-each(lambda (args)
-                             (let ([argName (string->symbol(TypeField-name args))]
-                                   [argKind (apply-env env (string->symbol (TypeField-kind args)))])
-                               ; (printf "argkind: ~a~n" argKind)
-                               ; (printf "argname: ~a~n" argName)
-                               ; (printf "arg: ~a~n" arg)
+                     (for-each(lambda (args)
+                                (let ([argName (string->symbol(TypeField-name args))]
+                                      [argKind (apply-env env (string->symbol (TypeField-kind args)))])
+                                  ; (printf "argkind: ~a~n" argKind)
+                                  ; (printf "argname: ~a~n" argName)
+                                  ; (printf "arg: ~a~n" arg)
                  
-                               (extend-env newScopeEnv argName (types:VarValue argKind #f)))) args)
+                                  (extend-env newScopeEnv argName (types:VarValue argKind #f)))) args)
 
 
                       
-                 ; (extend-env newScopeEnv name (types:FunValue-parameters funTy))
-                  (if (equal? (typeCheck body newScopeEnv inLoop) rTy) rTy (error "Not equal to return type"))
+                     ; (extend-env newScopeEnv name (types:FunValue-parameters funTy))
+                     (if (equal? (typeCheck body newScopeEnv inLoop) rTy) rTy (error "Not equal to return type"))
                   
-              )]))decl))
+                     )]))decl))
 
 (define (nameUnique nameList)
   (if (empty? nameList) #t
@@ -219,47 +219,47 @@
   (let ([ARFlag #f]
         [nameList '()]
         [multiF #f])
-  (modForEach (lambda (type)
-               ; (printf "TYPE1: ~a~n" type)
-               ; (set! nameList (cons (string->symbol name) nameList))
-                (match type
-                 ; (set! nameList (cons (string->symbol name) nameList))
-                  [(NameType name kind next)
-                   (begin
-                     (cond [(not(empty? next)) (set! multiF #t)])
-                     (set! nameList (cons (string->symbol name) nameList))
-                     (extend-env env (string->symbol name) (types:make-NameType '())))]
-                  [(ArrayType name kind next)  (set! nameList (cons (string->symbol name) nameList))(extend-env env (string->symbol name) (types:make-NameType '()))]
-                  [(RecordType name fields next)  (set! nameList (cons (string->symbol name) nameList))(extend-env env (string->symbol name) (types:make-NameType '()))]))
-              decl)
+    (modForEach (lambda (type)
+                  ; (printf "TYPE1: ~a~n" type)
+                  ; (set! nameList (cons (string->symbol name) nameList))
+                  (match type
+                    ; (set! nameList (cons (string->symbol name) nameList))
+                    [(NameType name kind next)
+                     (begin
+                       (cond [(not(empty? next)) (set! multiF #t)])
+                       (set! nameList (cons (string->symbol name) nameList))
+                       (extend-env env (string->symbol name) (types:make-NameType '())))]
+                    [(ArrayType name kind next)  (set! nameList (cons (string->symbol name) nameList))(extend-env env (string->symbol name) (types:make-NameType '()))]
+                    [(RecordType name fields next)  (set! nameList (cons (string->symbol name) nameList))(extend-env env (string->symbol name) (types:make-NameType '()))]))
+                decl)
     ;(printf "NameList: ~a~n" nameList)
     
-  ;  (foldl (lambda (name last)
-   ;         (if (not(equal? (member name nameList) #f)) #t (error "MEMBER ERROR"))) #f nameList))
+    ;  (foldl (lambda (name last)
+    ;         (if (not(equal? (member name nameList) #f)) #t (error "MEMBER ERROR"))) #f nameList))
     (cond
       [(equal? (nameUnique nameList) #t)]
       [else (error "NOT A UNIQUE NAME")])
   
        
-  (modForEach (lambda (type)
-             ;   (printf "TYPE2: ~a~n" type)
-                (match type
+    (modForEach (lambda (type)
+                  ;   (printf "TYPE2: ~a~n" type)
+                  (match type
                   
-                  [(RecordType name fields next)
-                   (let ([recTy (apply-env env (string->symbol name))])
-                     (types:set-NiType-actual! recTy (makeRecType name fields next env))
-                     (set! ARFlag #t))]
+                    [(RecordType name fields next)
+                     (let ([recTy (apply-env env (string->symbol name))])
+                       (types:set-NiType-actual! recTy (makeRecType name fields next env))
+                       (set! ARFlag #t))]
 
-                  [(ArrayType name kind next)
-                   (let ([arrTy (apply-env env (string->symbol name))])
-                     (types:set-NiType-actual! arrTy (makeArrType name kind next env))
-                     (set! ARFlag #t))]
+                    [(ArrayType name kind next)
+                     (let ([arrTy (apply-env env (string->symbol name))])
+                       (types:set-NiType-actual! arrTy (makeArrType name kind next env))
+                       (set! ARFlag #t))]
 
-                  [(NameType name kind next)
-                   (let ([nameTy (apply-env env (string->symbol name))])
-                     (types:set-NiType-actual! nameTy (makeNType name kind next env)))])
-                )decl)
-  (if (and (equal? ARFlag #f) (equal? multiF #t)) (error "ARFLAG ERROR") #t)))
+                    [(NameType name kind next)
+                     (let ([nameTy (apply-env env (string->symbol name))])
+                       (types:set-NiType-actual! nameTy (makeNType name kind next env)))])
+                  )decl)
+    (if (and (equal? ARFlag #f) (equal? multiF #t)) (error "ARFLAG ERROR") #t)))
 
               
 (define (makeRecType name fields next env)
@@ -273,10 +273,10 @@
 
 (define(makeNType name kind next env)
   (let ([nameSym (string->symbol name)])
-  (types:actual-type(apply-env env (string->symbol kind)))))
+    (types:actual-type(apply-env env (string->symbol kind)))))
 
 (define(correctComparison type1 type2)
- ; (printf "Type1: ~a~n" type1)
+  ; (printf "Type1: ~a~n" type1)
   ;(printf "Type2: ~a~n" type2)
   (if (not (and (types:NiType? type1) (types:NiType? type2)))
       (raise-arguments-error 'correctComparison "wrong types for correctComparison, must be NiType"
@@ -289,7 +289,7 @@
         [(and(types:ArrayType? type1) (types:ArrayType? type2)) (eq? type1 type2)]
         [(and(types:RecordType? type1) (types:RecordType? type2)) (eq? type1 type2)]
         [else #f]
-         )))
+        )))
      
   
 
@@ -305,7 +305,7 @@
 
 (define (typecheck-ast ast)
   (let ([typeEnv (init-typeEnv)])
-  ; don't clear errors in case we forgot to for some reason...
+    ; don't clear errors in case we forgot to for some reason...
     (if (error-generated?)
         (cond
           [(eq? (scan-error) #t) (error "cannot continue after scanning errors")]
@@ -322,268 +322,295 @@
 
 (define (typeCheck ast env inLoop)
   (let ([typeNote
- ;(printf "typeCheck with ~a~n~n" (object-name ast))
-  (match ast
-    ;Empty List --> VoidType
-    ['() (types:make-VoidType)]
-    ;Break Expression
-    [(BreakExpr) (if (equal? inLoop #t) (types:make-VoidType) (error "Breaking outside of a loop!"))]
-    [(PengExpr) (let ([ty (types:make-PengType)])
-                  (add-note ast 'type ty)
-                  ty)]
-    ;List with one element, List with 1+ element
-    [(list expr) (typeCheck expr env inLoop)] 
-    [(cons e1 e2)(begin
-                   (typeCheck e1 env inLoop)
-                   (typeCheck e2 env inLoop))]
+         ;(printf "typeCheck with ~a~n~n" (object-name ast))
+         (match ast
+           ;Empty List --> VoidType
+           ['() (types:make-VoidType)]
+           ;Break Expression
+           [(BreakExpr) (if (equal? inLoop #t) (types:make-VoidType) (error "Breaking outside of a loop!"))]
+           [(PengExpr) (let ([ty (types:make-PengType)])
+                         (add-note ast 'type ty)
+                         ty)]
+           ;List with one element, List with 1+ element
+           [(list expr) (typeCheck expr env inLoop)] 
+           [(cons e1 e2)(begin
+                          (typeCheck e1 env inLoop)
+                          (typeCheck e2 env inLoop))]
 
     
-    ;NameType
-    ;[(NameType name kind next) (let ([nameSym (string->symbol name)])
-                              ;   (extend-env env nameSym (types:actual-type(apply-env env (string->symbol kind)))))]
-    [(NameType name kind next) (typeCheckTD ast env name)]
+           ;NameType
+           ;[(NameType name kind next) (let ([nameSym (string->symbol name)])
+           ;   (extend-env env nameSym (types:actual-type(apply-env env (string->symbol kind)))))]
+           [(NameType name kind next) (typeCheckTD ast env name)]
 
-    ;RecordType
-   ; [(RecordType name fields next) (let ([nameSym (string->symbol name)])
+           ;RecordType
+           ; [(RecordType name fields next) (let ([nameSym (string->symbol name)])
                                         
-                                     ;(extend-env env nameSym (types:make-RecordType (nameFields fields env))))]
-    [(RecordType name fields next) (typeCheckTD ast env name)]
+           ;(extend-env env nameSym (types:make-RecordType (nameFields fields env))))]
+           [(RecordType name fields next) (typeCheckTD ast env name)]
                  
-    ;ArrayType
-    ;[(ArrayType name kind next) (let ([nameSym (string->symbol name)])
-                                  ;(extend-env env nameSym (types:make-ArrayType (apply-env env (string->symbol kind)))))]
-    [(ArrayType name kind next) (typeCheckTD ast env name)]
+           ;ArrayType
+           ;[(ArrayType name kind next) (let ([nameSym (string->symbol name)])
+           ;(extend-env env nameSym (types:make-ArrayType (apply-env env (string->symbol kind)))))]
+           [(ArrayType name kind next) (typeCheckTD ast env name)]
 
-    ;Numbers
-    [(NumExpr val) (let ([ty (types:make-IntType)])
-                     (add-note ast 'type ty)
-                     ty)]
-    ;No Value
-    [(NoVal) (let ([ty (types:make-VoidType)])
-               (add-note ast 'type ty)
-               ty)]
-    ;Strings
-    [(StringExpr str) (let ([ty (types:make-StringType)])
-                        (add-note ast 'type ty)
-                        ty)]
-    ;Array Expression (BracketAccess):
-    ;(typeCheck expr env)
-    [(ArrayExpr name expr) (let* ([nameAr (typeCheck name env inLoop)] ;(string->symbol expr)
-                                 [arField (typeCheck expr env inLoop)]
-                                 [arType (types:ArrayType-element-type (types:actual-type nameAr))])
-                             ;(printf "BracketName ~a~n" nameAr)
-                            ;(printf "BracketExpr ~a~n" arField)
-                             ;(printf "BracketType ~a~n" arType)
-                             ;(printf "EXPR ~a~n" expr)
+           ;Numbers
+           [(NumExpr val) (let ([ty (types:make-IntType)])
+                            (add-note ast 'type ty)
+                            ty)]
+           ;No Value
+           [(NoVal) (let ([ty (types:make-VoidType)])
+                      (add-note ast 'type ty)
+                      ty)]
+           ;Strings
+           [(StringExpr str) (let ([ty (types:make-StringType)])
+                               (add-note ast 'type ty)
+                               ty)]
+           ;Array Expression (BracketAccess):
+           ;(typeCheck expr env)
+           [(ArrayExpr name expr) (let* ([nameAr (typeCheck name env inLoop)] ;(string->symbol expr)
+                                         [arField (typeCheck expr env inLoop)]
+                                         [arType (types:ArrayType-element-type (types:actual-type nameAr))])
+                                    ;(printf "BracketName ~a~n" nameAr)
+                                    ;(printf "BracketExpr ~a~n" arField)
+                                    ;(printf "BracketType ~a~n" arType)
+                                    ;(printf "EXPR ~a~n" expr)
                              
-                             (cond
-                               [(and (types:ArrayType?  (types:actual-type nameAr)) (types:IntType? arField)) arType]
-                               [else (error "Not a valid Array Access")]))]
+                                    (cond
+                                      [(and (types:ArrayType?  (types:actual-type nameAr)) (types:IntType? arField)) arType]
+                                      [else (error "Not a valid Array Access")]))]
                            
 
-    ;Record Expressions (Dot Notation):
-    ;Check if Record name is a record
-    ;Check if field is declared as legit in that record --> return that field's return type
+           ;Record Expressions (Dot Notation):
+           ;Check if Record name is a record
+           ;Check if field is declared as legit in that record --> return that field's return type
     
-    [(RecordExpr name field) (let* ([nameRec (typeCheck name env inLoop)]
+           [(RecordExpr name field) (let* ([nameRec (typeCheck name env inLoop)]
                                  
-                              [recField (findit (string->symbol field) (types:RecordType-fields (types:actual-type nameRec)))])
-                             ;  (printf "namerec: ~a~n recField: ~a~n" (types:actual-type nameRec) recField)
-                             (cond
-                               [(and(types:RecordType? (types:actual-type nameRec)) (not(equal? recField #f))) (types:NiType-actual recField)]
-                               [else (error "Not a valid Record")]))]
+                                           [recField (findit (string->symbol field) (types:RecordType-fields (types:actual-type nameRec)))])
+                                      ;  (printf "namerec: ~a~n recField: ~a~n" (types:actual-type nameRec) recField)
+                                      (cond
+                                        [(and(types:RecordType? (types:actual-type nameRec)) (not(equal? recField #f))) (types:NiType-actual recField)]
+                                        [else (error "Not a valid Record")]))]
                              
                                
-    ;Variable Expression:
-    [(VarExpr name) (let ([t1 (apply-env env(string->symbol name))])
-                      ;(printf "VAR~a~n" t1)
-                      ;(printf "NAME~a~n" name)
-                      (cond
-                        ;[(and(types:VarValue? t1)(equal? (types:VarValue-readOnly t1) #t)) (error "Accessing a read-only variable")]
-                        [(equal? name "true") (types:make-BoolType)]
-                        [(equal? name "false") (types:make-BoolType)]
-                        [(equal? t1 #f) (error "Type Error")]
-                        [else (types:VarValue-type t1)]))]
+           ;Variable Expression:
+           [(VarExpr name) (let ([t1 (apply-env env(string->symbol name))])
+                             ;(printf "VAR~a~n" t1)
+                             ;(printf "NAME~a~n" name)
+                             (cond
+                               ;[(and(types:VarValue? t1)(equal? (types:VarValue-readOnly t1) #t)) (error "Accessing a read-only variable")]
+                               [(equal? name "true") (types:make-BoolType)]
+                               [(equal? name "false") (types:make-BoolType)]
+                               [(equal? t1 #f) (error "Type Error")]
+                               [else
+                                (begin
+                                  (add-note ast 'varval t1)
+                                  (types:VarValue-type t1))
+                                ]))]
 
-    ;Math Expressions:
-    [(MathExpr e1 op e2) (let ([t1 (typeCheck e1 env inLoop)]
-                               [t2 (typeCheck e2 env inLoop)])
-                           ;(printf "~n~ne1 and e2 ~a~a~n" e1 e2)
-                           (if (and (types:IntType? t1) (types:IntType? t2))
-                               (begin
-                                 (add-note ast 'type (types:IntType '()))
-                               (types:make-IntType))
-                               (error "Type Mismatch in MathExpression")))
+           ;Math Expressions:
+           [(MathExpr e1 op e2) (let ([t1 (typeCheck e1 env inLoop)]
+                                      [t2 (typeCheck e2 env inLoop)])
+                                  ;(printf "~n~ne1 and e2 ~a~a~n" e1 e2)
+                                  (if (and (types:IntType? t1) (types:IntType? t2))
+                                      (begin
+                                        (add-note ast 'type (types:IntType '()))
+                                        (types:make-IntType))
+                                      (error "Type Mismatch in MathExpression")))
                          
-                         ]
+                                ]
 
-    ;Boolean Expressions:
-    [(BoolExpr e1 op e2) (let ([t1 (typeCheck e1 env inLoop)]
-                               [t2 (typeCheck e2 env inLoop)])
-                            ;(printf "~n~n t1 and t2 ~a~a~n" t1 t2)
-                            ;(printf "~a" )
-                           (cond
-                             [(and (and  (types:BoolType? t1) (types:BoolType? t2)) (or (eq? op 'ne) (eq? op 'eq))) (types:make-BoolType)]
-                             [(and (types:StringType? t1) (types:StringType? t2))(types:make-BoolType)]
-                             [(and (types:IntType? t1) (types:IntType? t2)) (types:make-BoolType)]
-                             [(and(and (types:RecordType? t1) (types:RecordType? t2)) (or (eq? op 'ne) (eq? op 'eq))) (types:make-BoolType)]
-                             [(and(and (or (types:RecordType? t1) (types:PengType? t1)) (types:RecordType? t2)) (or (eq? op 'ne) (eq? op 'eq))) (types:make-BoolType)]
-                             [(and(and (types:RecordType? t1) (or (types:RecordType? t2) (types:PengType? t2))) (or (eq? op 'ne) (eq? op 'eq))) (types:make-BoolType)]
+           ;Boolean Expressions:
+           [(BoolExpr e1 op e2) (let ([t1 (typeCheck e1 env inLoop)]
+                                      [t2 (typeCheck e2 env inLoop)])
+                                  ;(printf "~n~n t1 and t2 ~a~a~n" t1 t2)
+                                  ;(printf "~a" )
+                                  (cond
+                                    [(and (and  (types:BoolType? t1) (types:BoolType? t2)) (or (eq? op 'ne) (eq? op 'eq))) (types:make-BoolType)]
+                                    [(and (types:StringType? t1) (types:StringType? t2))(types:make-BoolType)]
+                                    [(and (types:IntType? t1) (types:IntType? t2)) (types:make-BoolType)]
+                                    [(and(and (types:RecordType? t1) (types:RecordType? t2)) (or (eq? op 'ne) (eq? op 'eq))) (types:make-BoolType)]
+                                    [(and(and (or (types:RecordType? t1) (types:PengType? t1)) (types:RecordType? t2)) (or (eq? op 'ne) (eq? op 'eq))) (types:make-BoolType)]
+                                    [(and(and (types:RecordType? t1) (or (types:RecordType? t2) (types:PengType? t2))) (or (eq? op 'ne) (eq? op 'eq))) (types:make-BoolType)]
                              
-                             [(and(and (types:ArrayType? t1) (types:ArrayType t2)) (or (eq? op 'ne) (eq? op 'eq))) (types:make-BoolType)]
+                                    [(and(and (types:ArrayType? t1) (types:ArrayType t2)) (or (eq? op 'ne) (eq? op 'eq))) (types:make-BoolType)]
                              
-                             [else (error "TYPEEEEEE issue in le Bools")]))]
+                                    [else (error "TYPEEEEEE issue in le Bools")]))]
 
-    ;Logic Expressions:
-    [(LogicExpr e1 op e2) (let ([t1 (typeCheck e1 env inLoop)]
-                                [t2 (typeCheck e2 env inLoop)])
-                            (cond
-                              [(and (types:BoolType? t1) (types:BoolType? t2)) (types:make-BoolType)] 
-                              [else (error "Logic Type not Compatable " ast)]))]
+           ;Logic Expressions:
+           [(LogicExpr e1 op e2) (let ([t1 (typeCheck e1 env inLoop)]
+                                       [t2 (typeCheck e2 env inLoop)])
+                                   (cond
+                                     [(and (types:BoolType? t1) (types:BoolType? t2)) (types:make-BoolType)] 
+                                     [else (error "Logic Type not Compatable " ast)]))]
 
-    ;Assignment Expression:
-    [(AssignmentExpr name expr)
-    ; (printf "nameASS ~a~n" name)
-     (let ([t1 (types:actual-type(typeCheck name env inLoop))] ;(apply-env env (string->symbol name))
-           [t2 (types:actual-type(typeCheck expr env inLoop))])
-       ;(printf "correctComparison ~a~n" t1)
-      ; (printf "exprHERE ~a~n" t2)
-      ; (printf "t2 ~a~n" t2)
-       (match name
-         [(VarExpr name)(if (eq?(types:VarValue-readOnly (apply-env env (string->symbol name))) #t) (error "ASSERROR")
-                            (begin
-                            ;  (printf "correctComparison ~a~n" (correctComparison t1 t2))
-                                                          (cond
-                                                            [(correctComparison t1 t2) (types:make-VoidType)]
-                                                            [(types:PengType? t2) (types:make-VoidType)]
-                                                            [else (error "ASSEXPR SUCKS")])))]
-         [_
-       
-       ;  (printf "correctComparison ~a~n" (correctComparison t1 t2))
-       (cond
-         
-         [(correctComparison t1 t2) (types:make-VoidType)]
-         [else (error "AssignmentExpression Suckssssss")])]))]
-
-    ;New Record Expressions
-    [(NewRecordExpr name assignments) (let ([recName (apply-env env (string->symbol name))])
-                                       ; (printf "applyEnv ~a~n" (types:actual-type recName))
-                                      (recordSearch assignments env recName (types:RecordType-fields (types:actual-type recName)) inLoop))]
-
-     ;New Array Expression:
-    ;type must be declared as an array type
-    ;if so, extend env. with that array with "expr" elements, and have that kind assigned to each element 
-    [(NewArrayExpr name expr kind) (let ([arrName (apply-env env (string->symbol name))]
-                                         [arrExp (typeCheck expr env inLoop)]
-                                         [arrKind (apply-env env kind)])
+           ;Assignment Expression:
+           [(AssignmentExpr name expr)
+            ; (printf "nameASS ~a~n" name)
+            (let ([t1 (types:actual-type(typeCheck name env inLoop))] ;(apply-env env (string->symbol name))
+                  [t2 (types:actual-type(typeCheck expr env inLoop))]
+                  )
+              ;[t3 (apply-env env(string->symbol name))])
+              ;(printf "correctComparison ~a~n" t1)
+              ; (printf "exprHERE ~a~n" t2)
+              ; (printf "t2 ~a~n" t2)
+              (match name
+                [(VarExpr name)(if (eq?(types:VarValue-readOnly (apply-env env (string->symbol name))) #t) (error "ASSERROR")
+                                   (begin
+                                     ;  (printf "correctComparison ~a~n" (correctComparison t1 t2))
                                      
-                                  ;  (printf "arrnameEleType: ~a~n" (types:ArrayType-element-type (types:actual-type arrName)))
-                                   ;  (printf "expr: ~a~n" arrExp)
-                                    ;(printf "kind: ~a~n" (typeCheck kind env inLoop)) 
+                                     (let ([t3 (types:VarValue (apply-env env (string->symbol name)) #t)])
+                                       (add-note ast 'varval  t3))
+                                       
                                      (cond
-                                       ;[(and(and (types:ArrayType? arrName) (types:IntType? arrExp)) (NumExpr-val kind)) arrName]
-                                       [(and (and (types:ArrayType? (types:actual-type arrName))(types:IntType? arrExp))
-                                             (equal?(types:ArrayType-element-type (types:actual-type arrName))(typeCheck kind env inLoop))) arrName]
-                                       [else (error "Not arrType")]))]
+                                       [(correctComparison t1 t2) (types:make-VoidType)]
+                                       [(types:PengType? t2) (types:make-VoidType)]
+                                       [else (error "ASSEXPR SUCKS")])))]
+                [_
+       
+                 ;  (printf "correctComparison ~a~n" (correctComparison t1 t2))
+                 (cond
+         
+                   [(correctComparison t1 t2)
+                    ;(begin
+                     ; (add-note ast 'varval t1)
+                      (types:make-VoidType)
+          
+                    ]
+                   [else (error "AssignmentExpression Suckssssss")])]))]
+
+           ;New Record Expressions
+           [(NewRecordExpr name assignments) (let ([recName (apply-env env (string->symbol name))])
+                                               ; (printf "applyEnv ~a~n" (types:actual-type recName))
+                                               (recordSearch assignments env recName (types:RecordType-fields (types:actual-type recName)) inLoop))]
+
+           ;New Array Expression:
+           ;type must be declared as an array type
+           ;if so, extend env. with that array with "expr" elements, and have that kind assigned to each element 
+           [(NewArrayExpr name expr kind) (let ([arrName (apply-env env (string->symbol name))]
+                                                [arrExp (typeCheck expr env inLoop)]
+                                                [arrKind (apply-env env kind)])
+                                     
+                                            ;  (printf "arrnameEleType: ~a~n" (types:ArrayType-element-type (types:actual-type arrName)))
+                                            ;  (printf "expr: ~a~n" arrExp)
+                                            ;(printf "kind: ~a~n" (typeCheck kind env inLoop)) 
+                                            (cond
+                                              ;[(and(and (types:ArrayType? arrName) (types:IntType? arrExp)) (NumExpr-val kind)) arrName]
+                                              [(and (and (types:ArrayType? (types:actual-type arrName))(types:IntType? arrExp))
+                                                    (equal?(types:ArrayType-element-type (types:actual-type arrName))(typeCheck kind env inLoop))) arrName]
+                                              [else (error "Not arrType")]))]
 
    
-    ;(printf "~n~a"(extend-env env arrName (types:make-VoidType)))
-    ;Variable Declarations
-    [(VarDecl type id expr) (let ([t1 (types:actual-type(typeCheck expr env inLoop))])
-                             ; (printf "env: ~a~n" env)
-                              ;(printf "t1 ~a~n" t1)
-                              (cond
+           ;(printf "~n~a"(extend-env env arrName (types:make-VoidType)))
+           ;Variable Declarations
+           [(VarDecl type id expr) (let ([t1 (types:actual-type(typeCheck expr env inLoop))])
+                                     ; [vartype (types:VarValue t1 #f)]
+                                     ;[vartypeEx (types:VarValue (types:actual-type (apply-env env (string->symbol type))) #f)])
+
+
+                              
+                                     (cond
                                 
-                                [(and (eq? type #f) (not (types:PengType? t1))) (extend-env env (string->symbol id) (types:VarValue t1 #f))]
-                                [(and (eq? type #f) (types:PengType? t1)) (error "Assigning Peng Wrong")]
-                                [(and (not (eq? type #f))(types:PengType? t1)) (extend-env env (string->symbol id) (types:VarValue (types:actual-type (apply-env env (string->symbol type))) #f))]
-                                ;return type?
-                               ; [(equal? (types:actual-type (apply-env env (string->symbol type))) t1)
-                                [(correctComparison (types:actual-type (apply-env env (string->symbol type))) t1)
-                                 (begin
-                                   ;(printf "BeforeExt: ~a~n" (apply-env env (string->symbol type)))
-                                 (extend-env env (string->symbol id) (types:VarValue t1 #f)))]
-                                [(and (types:RecordType? (apply-env env (string->symbol type)))  (types:PengType? t1)) (types:make-VoidType)]
+                                       [(and (eq? type #f) (not (types:PengType? t1))) (let
+                                                                                           ([vartype (types:VarValue t1 #f)])
+                                                                                         (extend-env env (string->symbol id) vartype)
+                                                                                         vartype)]
                                 
-                                [else ( (types:actual-type (apply-env env (string->symbol type)))(error "ERMERGRD"))]))]
+                                       [(and (eq? type #f) (types:PengType? t1)) (error "Assigning Peng Wrong")]
+                                
+                                       [(and (not (eq? type #f))(types:PengType? t1))
+                                        (let
+                                            ([vartypeEx (types:VarValue (types:actual-type (apply-env env (string->symbol type))) #f)])
+                                          (extend-env env (string->symbol id) vartypeEx)
+                                          vartypeEx)]
+                                
+                          
+                                       [(correctComparison (types:actual-type (apply-env env (string->symbol type))) t1)
+                                        (let ([vv (types:VarValue t1 #f)])
+                                          (extend-env env (string->symbol id) vv)
+                                          vv)]
+                                       [(and (types:RecordType? (apply-env env (string->symbol type)))  (types:PengType? t1)) (types:make-VoidType)]
+                                
+                                       [else ( (types:actual-type (apply-env env (string->symbol type)))(error "ERMERGRD"))]))]
 
-    ;Function Declaration:  (enterNewScope args rettype body env)
-    ;Collect name, parameters, store them in environment (FunValue)
-    ;Must enter new scope, add bindings to parameters (extend environment)
-    ;typecheck body, return final type of expression, compare this against function definition
-    ;(typeCheckFun decl env)
-    [(FunDecl name args rettype body next) (typeCheckFun ast env #f)]
+           ;Function Declaration:  (enterNewScope args rettype body env)
+           ;Collect name, parameters, store them in environment (FunValue)
+           ;Must enter new scope, add bindings to parameters (extend environment)
+           ;typecheck body, return final type of expression, compare this against function definition
+           ;(typeCheckFun decl env)
+           [(FunDecl name args rettype body next) (typeCheckFun ast env #f)]
 
-    ;Let Expressions
-    [(LetExpr decls exprs) (let ([env1 (push-scope env)])
-                                      ; [testThing (types:RecordType? decls)])
-                             (typeCheck decls env1 inLoop)
-                            ; (printf "decls: ~a~n" decls)
-                             ;(printf "exprs: ~a~n" exprs)
-                             ;(printf "env: ~a~n" env )
+           ;Let Expressions
+           [(LetExpr decls exprs) (let ([env1 (push-scope env)])
+                                    ; [testThing (types:RecordType? decls)])
+                                    (typeCheck decls env1 inLoop)
+                                    ; (printf "decls: ~a~n" decls)
+                                    ;(printf "exprs: ~a~n" exprs)
+                                    ;(printf "env: ~a~n" env )
 
-                             (typeCheck exprs env1 inLoop))
-                           ;  (let ([tCheckVal (typeCheck exprs env1 inLoop)])
-                            ;   (printf "tCheckVal: ~a~n" tCheckVal)
-                            ; (pop-scope env1)
-                               ;(printf "tCheckVal: ~a~n" (apply-env env tCheckVal))
-                             ;  (cond
-                              ;   [(apply-env env tCheckVal)]
-                               ;  [else (error "Referring to something out of scope in a let expression")])))
-                           ]
+                                    (typeCheck exprs env1 inLoop))
+                                  ;  (let ([tCheckVal (typeCheck exprs env1 inLoop)])
+                                  ;   (printf "tCheckVal: ~a~n" tCheckVal)
+                                  ; (pop-scope env1)
+                                  ;(printf "tCheckVal: ~a~n" (apply-env env tCheckVal))
+                                  ;  (cond
+                                  ;   [(apply-env env tCheckVal)]
+                                  ;  [else (error "Referring to something out of scope in a let expression")])))
+                                  ]
 
-    ;If Expressions
-    [(IfExpr testExpr true-branch false-branch) (let ([t1 (typeCheck testExpr env inLoop)]
-                                                      [t2 (typeCheck true-branch env inLoop)]
-                                                      [t3 (typeCheck false-branch env inLoop)])
-                                                  (cond
-                                                    [(and (types:BoolType? t1) (equal? t2 t3)) t2]
-                                                    [else (error "If Thing Errorssss")]))]
+           ;If Expressions
+           [(IfExpr testExpr true-branch false-branch) (let ([t1 (typeCheck testExpr env inLoop)]
+                                                             [t2 (typeCheck true-branch env inLoop)]
+                                                             [t3 (typeCheck false-branch env inLoop)])
+                                                         (cond
+                                                           [(and (types:BoolType? t1) (equal? t2 t3)) t2]
+                                                           [else (error "If Thing Errorssss")]))]
 
-    ;While Expression
-    [(WhileExpr test body) (let ([testExpr (typeCheck test env inLoop)]
-                                 [bodyExpr (typeCheck body env #t)])
-                             (cond
-                               [(and (types:BoolType? testExpr) (types:VoidType? bodyExpr)) (types:make-VoidType)]
-                               [else (error "While Expression error")]))]
-    ;With Expression:
-    ;expr1 must be < expr2
-    ;expr3 must not produce a value
-    [(WithExpr name init from to) (let ([expr1 (typeCheck from env inLoop)]
-                                        [expr2 (typeCheck to env inLoop)])
-                                        
-                                     ; (printf "expr3: ~a~n" expr3)
+           ;While Expression
+           [(WhileExpr test body) (let ([testExpr (typeCheck test env inLoop)]
+                                        [bodyExpr (typeCheck body env #t)])
                                     (cond
-                                      [(and (types:IntType? expr1) (types:IntType? expr2)) (extend-env env (string->symbol name) (types:VarValue (types:make-IntType) #t))]
-                                      [else (error "WithExpression Error from and to must be ints")]))
-                                    (let ([expr3 (typeCheck init env #t)])
-                                      (if (types:VoidType? expr3) (types:make-VoidType) (error "Expr3 broken")))]
+                                      [(and (types:BoolType? testExpr) (types:VoidType? bodyExpr)) (types:make-VoidType)]
+                                      [else (error "While Expression error")]))]
+           ;With Expression:
+           ;expr1 must be < expr2
+           ;expr3 must not produce a value
+           [(WithExpr name init from to) (let ([expr1 (typeCheck from env inLoop)]
+                                               [expr2 (typeCheck to env inLoop)])
+                                        
+                                           ; (printf "expr3: ~a~n" expr3)
+                                           (cond
+                                             [(and (types:IntType? expr1) (types:IntType? expr2)) (extend-env env (string->symbol name) (types:VarValue (types:make-IntType) #t))]
+                                             [else (error "WithExpression Error from and to must be ints")]))
+                                         (let ([expr3 (typeCheck init env #t)])
+                                           (if (types:VoidType? expr3) (types:make-VoidType) (error "Expr3 broken")))]
 
-    ;FunCall Expression:
-    ;If ID indicates a function w/o return val then it must not return a val
-    ;(recordSearch assignments env recName (types:RecordType-fields recName)))]
-    [(FuncallExpr name args);(begin (printf "env in FunCall : ~a~n" env)
-     (let ([id (apply-env env (string->symbol name))]
-                                   [argList (typeCheck args env inLoop)])
-   ;    (printf "ARGLIST ~a~n" argList)
-       (let ([funStore 
-                               (funSearch args env id (types:FunValue-parameters id) inLoop)])
-         (printf "~a " funStore)
-         (add-note ast 'type funStore)
-         funStore)
+           ;FunCall Expression:
+           ;If ID indicates a function w/o return val then it must not return a val
+           ;(recordSearch assignments env recName (types:RecordType-fields recName)))]
+           [(FuncallExpr name args);(begin (printf "env in FunCall : ~a~n" env)
+            (let ([id (apply-env env (string->symbol name))]
+                  [argList (typeCheck args env inLoop)])
+              ;    (printf "ARGLIST ~a~n" argList)
+              (let ([funStore 
+                     (funSearch args env id (types:FunValue-parameters id) inLoop)])
+                (printf "~a " funStore)
+                (add-note ast 'type funStore)
+                funStore)
 
        
-                               )]
+              )]
                                  
                                         
                              
                              
                      
-    [_(begin
-        (display ast)
-     (error "Node not implemented yet!"))]
+           [_(begin
+               (display ast)
+               (error "Node not implemented yet!"))]
     
-    )]) (add-note ast 'type typeNote) typeNote))
+           )]) (add-note ast 'type typeNote) typeNote))
 
 ; noval
 (check-expect (tc-str "()") (types:make-VoidType))
@@ -633,14 +660,14 @@ ni itype x is 5 in x end") (types:make-IntType))
 
 ; simple records
 (check-expect (tc-str
-"let
+               "let
   define empty kind as {}
   ni e is empty {}
 in end") (types:make-VoidType))
 
 ; record starting off null
 (check-expect (tc-str
-"let
+               "let
   define empty kind as {}
   ni empty e is peng
 in
