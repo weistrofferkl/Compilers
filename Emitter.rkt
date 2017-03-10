@@ -287,13 +287,13 @@
 (define (emit-assign name expr)
   (emit-comment "Assignment Expression")
   
-  (let* ([result (make-label-result)]
+  (let* (
          [struStr (result->string expr)]
-         [resstr (result->string result)])
-    (printf "~n result-str from emitAssign ~a" result)
+         [resstr (result->string name)])
+    ;(printf "~n result-str from emitAssign ~a" )
     (printf "~n struStr from emitAssign ~a" struStr)
     
-    (println "store i64 "struStr", i64* "resstr))) 
+    (println "store i64 "struStr", i64* "resstr) name)) 
 
 ;varExpression
 (define (emit-varExpr type res)

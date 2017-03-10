@@ -83,6 +83,8 @@
     ;Math Expression
     [(MathExpr V1 op V2) (mathexpr->llvm ast V1 op V2)]
 
+    [(IfExpr testExpr true-branch false-branch) (ifexpr->llvm ast)]
+
     
     
     [_ (error "Translation node " ast " not implemented yet!")]))        
@@ -103,6 +105,23 @@
            
          (add-note node 'result (get-note (last exprs) 'result))
          ))]))
+
+(define (ifexpr->llvm node)
+  (match node
+    [(IfExpr testExpr true-branch false-branch)
+     (begin
+     (ast->llvm testExpr)
+     (let
+         ([branch1 (make-label-result)]
+          [branch2 (make-label-result)]
+          [elseBranch (make-label-result)]
+          [testCaseRes (get-note testExpr 'result)])
+
+       (emit-branch testCaseRes)
+       
+
+       ))]))
+    ; ]))
   
 
 ;VarDecls
@@ -140,20 +159,24 @@
 
 ;Assignment Expression
 (define (assexpr->llvm node)
+  
   (match node
     [(AssignmentExpr name expr)
+     (ast->llvm name)
      (let* ([nodeRet(ast->llvm expr)]
-            [emitRet (emit-assign name (get-note expr 'result))]
-            [varvalue  (get-note node 'varval)])
+
+            
+            [varvalue  (get-note name 'varval)]
+            [emitRet (emit-assign (t:VarValue-result varvalue) (get-note expr 'result))])
             ;[varRes (t:VarValue-result varvalue)])
-       (printf "~n HELLO SAYS LE ASSIGNMENT!!!!")
-       (printf "~n Var Value from AssExpr ~a" emitRet)
+      ; (printf "~n HELLO SAYS LE ASSIGNMENT!!!!")
+       ;(printf "~n Var Value from AssExpr ~a" emitRet)
        ;(add-note node 'result varvalue) ; was prev. (add-note node 'result emitRet)
-       (add-note node 'result varvalue)
+       (add-note node 'result emitRet)
        (t:set-VarValue-result! varvalue emitRet)
        )]))
-         
 
+       
 
 ;String Expressions
 (define (stringexpr->llvm node val)
