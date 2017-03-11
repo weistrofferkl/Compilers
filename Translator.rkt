@@ -8,6 +8,8 @@
          "errors.rkt"
          "log.rkt")
 
+;DO STRING COMPARISON, Branches, While-Loops, With-Loop, FunDecl, Arrays
+
 (provide (all-defined-out))
 
 (define (trans str)
@@ -85,9 +87,15 @@
 
     [(IfExpr testExpr true-branch false-branch) (ifexpr->llvm ast)]
 
+    [(BoolVal _) (boolval->llvm ast)]
+
     
     
-    [_ (error "Translation node " ast " not implemented yet!")]))        
+    [_ (error "Translation node " ast " not implemented yet!")]))
+
+(define (boolval->llvm node)
+ 
+  (add-note node 'result (emit-boolVal (BoolVal-val node))))
 
 ; emits a numeric literal
 (define (numexpr->llvm node val)
@@ -110,18 +118,32 @@
   (match node
     [(IfExpr testExpr true-branch false-branch)
      (begin
-     (ast->llvm testExpr)
-     (let
-         ([branch1 (make-label-result)]
-          [branch2 (make-label-result)]
-          [elseBranch (make-label-result)]
-          [testCaseRes (get-note testExpr 'result)])
+       (ast->llvm testExpr)
+       (let
+           (
+            [thenBranch (make-label)]
+            [elseBranch (make-label)]
+            [endBranch (make-label)]
+            [phiThing (make-temp-result)]
+            [testCaseRes (get-note testExpr 'result)])
 
-       (emit-branch testCaseRes)
-       
+        ; (testExpr) ;branch to then ;branch to false)
+         (emit-branch testCaseRes thenBranch elseBranch)
+        
+         (println (Label-name thenBranch) ": ") 
+         (ast->llvm true-branch)
+         (emit-jump endBranch)
 
-       ))]))
-    ; ]))
+         (println (Label-name elseBranch) ": ") 
+         (ast->llvm false-branch)
+         (emit-jump endBranch)
+
+         (println (Label-name endBranch) ": ")
+
+         (add-note node 'result (emit-phi phiThing thenBranch elseBranch (get-note true-branch 'result) (get-note false-branch 'result)))
+
+         ))]))
+
   
 
 ;VarDecls

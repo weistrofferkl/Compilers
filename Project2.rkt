@@ -47,6 +47,8 @@
 (struct ArrayType (name kind next) #:transparent)
 (struct TypeField (name kind) #:transparent)
 
+(struct BoolVal (val) #:transparent)
+
 ; defines a function in ni
 ; these consist of the name of the function, the arguments to it,
 ; the return type (which may be #f if it doesn't have one) and the body
@@ -269,6 +271,7 @@
    ;[(simple-expression) $1])
 
      (simple-expression
+      [(BOOL) (BoolVal $1)]
       [(NUM) (NumExpr $1)]
       [(BREAK) (BreakExpr)]
       [(LPAREN RPAREN) (NoVal)]

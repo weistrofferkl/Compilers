@@ -7,7 +7,7 @@
 (require test-engine/racket-tests)
 
 
-(define-tokens value-tokens (NUM ID STRING))
+(define-tokens value-tokens (NUM ID STRING BOOL))
 (define-empty-tokens paren-types (LPAREN RPAREN LBRACKET RBRACKET LBRACE RBRACE)) ;done
 (define-empty-tokens operators (ADD MULT DIV SUB DOT)) ;done
 (define-empty-tokens punct (COMMA COLON SEMI)) ; done
@@ -23,6 +23,8 @@
 (define nilexer
   (lexer-src-pos ;Tells where syntax error does, also lets you define error functions
    ;Keywords
+   ["true" (token-BOOL #t)]
+   ["false" (token-BOOL #f)]
    ["define" (token-DEFINE)]
    ["neewom" (token-NEEWOM)]
    ["ni" (token-NI)]

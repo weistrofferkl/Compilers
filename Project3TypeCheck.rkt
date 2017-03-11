@@ -358,6 +358,8 @@
            [(NumExpr val) (let ([ty (types:make-IntType)])
                             (add-note ast 'type ty)
                             ty)]
+
+           [(BoolVal v) (types:make-BoolType)]
            ;No Value
            [(NoVal) (let ([ty (types:make-VoidType)])
                       (add-note ast 'type ty)

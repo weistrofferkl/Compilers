@@ -238,6 +238,16 @@
 ;name results return-type types of all results
 ;call rettype funName(argTy, argRes)
 
+(define (emit-boolVal val)
+
+  (let* ([result (make-temp-result)]
+         [resstr (result->string result)])
+  (cond
+    [val (println resstr " = add i1 1 , 0")]
+    [else (println resstr " = add i1 0 , 0")]
+  
+ ) result))
+
 ;Emit Boolean Exprs
 (define (boolsym? sym)
   (and (symbol? sym) (or (eq? sym 'eq) (eq? sym 'ne) (eq? sym 'lt) (eq? sym 'gt) (eq? sym 'le) (eq? sym 'ge))))
@@ -355,6 +365,17 @@
     (println resstr " = global [" (number->string (+ len 1)) " x i8] c" llvmStr", align 1")
     (println strucStr " = global %struct.string { i64 " (number->string len) ", i8* getelementptr inbounds([" (number->string (+ len 1)) " x i8], [" (number->string (+ len 1))" x i8]* " resstr", i32 0, i32 0)}, align 8")
   (end-global-defn) struc))
+
+
+(define (emit-branch var thenBranchLabel elseBranchLabel)
+  (println "br i1 " (result->string var) ", label %" (Label-name thenBranchLabel)", label %" (Label-name elseBranchLabel)))
+
+(define (emit-jump branchlabel)
+  (println "br label %" (Label-name branchlabel)))
+
+(define (emit-phi phiThing thenBranch elseBranch thenVar elseVar)
+  (println (result->string phiThing) " = phi i64 [ " (result->string thenVar) ", " (Label-name thenBranch)" ], [ " (result->string elseVar)", " (Label-name elseBranch) " ]")
+  phiThing)
   
 
 (define (get-type-name nitype)
