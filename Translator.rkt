@@ -8,7 +8,7 @@
          "errors.rkt"
          "log.rkt")
 
-;DO STRING COMPARISON, Branches, While-Loops, With-Loop, FunDecl, Arrays
+;DO STRING COMPARISON, While-Loops, With-Loop, FunDecl, Arrays
 
 (provide (all-defined-out))
 

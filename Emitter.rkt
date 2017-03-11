@@ -374,7 +374,7 @@
   (println "br label %" (Label-name branchlabel)))
 
 (define (emit-phi phiThing thenBranch elseBranch thenVar elseVar)
-  (println (result->string phiThing) " = phi i64 [ " (result->string thenVar) ", " (Label-name thenBranch)" ], [ " (result->string elseVar)", " (Label-name elseBranch) " ]")
+  (println (result->string phiThing) " = phi i64 [ " (result->string thenVar) ", %" (Label-name thenBranch)" ], [ " (result->string elseVar)", %" (Label-name elseBranch) " ]")
   phiThing)
   
 
