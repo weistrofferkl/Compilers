@@ -91,6 +91,9 @@
     ;While Loop
     [(WhileExpr test body) (whileExpr->llvm ast)]
 
+    ;With Loop
+    [(WithExpr name init from to) (withExpr->llvm ast)]
+
     ;Bool Val Thing Chris Had Me Add. 
     [(BoolVal _) (boolval->llvm ast)]
 
@@ -119,6 +122,7 @@
          (add-note node 'result (get-note (last exprs) 'result))
          ))]))
 
+;If-Expression
 (define (ifexpr->llvm node)
   (match node
     [(IfExpr testExpr true-branch false-branch)
@@ -149,6 +153,7 @@
 
          ))]))
 
+;While Loop
 (define (whileExpr->llvm node)
   (match node
     [(WhileExpr test body)
@@ -156,29 +161,62 @@
        (let* ([testBranch (make-label)]
               [bodyBranch (make-label)]
               [endBranch (make-label)]
-
               )
-
          (emit-jump testBranch)
          (println (Label-name testBranch)": ")
          (ast->llvm test)
-         (let ([testCaseRes (get-note test 'result)])
-          
-          
-
-           (emit-branch testCaseRes bodyBranch endBranch)
-          
-           (println (Label-name bodyBranch) ": ")
-          
-           (ast->llvm body)
          
+         (let ([testCaseRes (get-note test 'result)])
+           
+           (emit-branch testCaseRes bodyBranch endBranch)
+           (println (Label-name bodyBranch) ": ")
+           (ast->llvm body)
            (emit-jump testBranch)
-          
            (println (Label-name endBranch) ": ")
-          
            (add-note node 'result (emit-WhileVoid)))
 
          ))]))
+
+;With Loop
+
+(define (withExpr->llvm node)
+  (match node
+    [(WithExpr name init from to) ;init is body
+     (begin
+       
+       
+       (ast->llvm from)
+       (let ([fromLabel
+              (emit-inital (get-note from 'result))])
+         (ast->llvm to)
+         (let ([conBranch (make-label)]
+               [bodyBranch (make-label)]
+               [endBranch (make-label)]
+               [holderVar (make-temp-result)]
+               [holderVar2 (make-temp-result)]
+               )
+
+           (emit-jump conBranch)
+           (println (Label-name conBranch) ": ")
+
+           (let 
+               ([condRes (emit-condition holderVar holderVar2 fromLabel (get-note to 'result))])
+ 
+             (emit-branch condRes bodyBranch endBranch)
+             (println (Label-name bodyBranch)": ")
+             
+           
+             (printf "~n init ~a" init )
+             (ast->llvm init)
+          
+             (emit-jump conBranch)
+             
+             (println (Label-name endBranch)": ")
+            
+         
+             (add-note node 'result (emit-WhileVoid))))))]))
+      
+         
           
           
           

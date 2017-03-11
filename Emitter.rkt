@@ -283,6 +283,7 @@
       [else (raise-arguments-error 'emit-logic "logicsym must be 'or, or 'and"
                                      "logicsym" logicsym)]) result)))
 
+;Emit VarDecl
 (define (emit-varDecl type id expr)
   (emit-comment "Var Decl")
 
@@ -379,6 +380,24 @@
 
 (define (emit-WhileVoid)
   (println "ret i32 0"))
+
+(define (emit-inital to)
+
+   (let* ([result (make-label-result)]
+         [struStr (result->string to)]
+         [resstr (result->string result)])
+
+    
+         (println resstr " = alloca i64, align 8")
+         (println "store i64 " struStr", i64* " resstr)
+     
+         resstr))
+  
+(define (emit-condition holderVar holderVar2 varVal toVal)
+
+  
+  (println (result->string holderVar) " = load i64, i64* " varVal)
+  (println (result->string holderVar2) " = icmp sle i64 " (result->string holderVar)", " (result->string toVal)) holderVar2)
   
 
 (define (get-type-name nitype)
