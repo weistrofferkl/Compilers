@@ -8,7 +8,7 @@
          "errors.rkt"
          "log.rkt")
 
-;DO STRING COMPARISON, While-Loops, With-Loop, FunDecl, Arrays
+;DO STRING COMPARISON, With-Loop, FunDecl, Arrays
 
 (provide (all-defined-out))
 
@@ -84,9 +84,14 @@
 
     ;Math Expression
     [(MathExpr V1 op V2) (mathexpr->llvm ast V1 op V2)]
-
+    
+    ;If Expression
     [(IfExpr testExpr true-branch false-branch) (ifexpr->llvm ast)]
 
+    ;While Loop
+    [(WhileExpr test body) (whileExpr->llvm ast)]
+
+    ;Bool Val Thing Chris Had Me Add. 
     [(BoolVal _) (boolval->llvm ast)]
 
     
@@ -94,8 +99,8 @@
     [_ (error "Translation node " ast " not implemented yet!")]))
 
 (define (boolval->llvm node)
- 
   (add-note node 'result (emit-boolVal (BoolVal-val node))))
+
 
 ; emits a numeric literal
 (define (numexpr->llvm node val)
@@ -127,7 +132,7 @@
             [phiThing (make-temp-result)]
             [testCaseRes (get-note testExpr 'result)])
 
-        ; (testExpr) ;branch to then ;branch to false)
+         ; (testExpr) ;branch to then ;branch to false)
          (emit-branch testCaseRes thenBranch elseBranch)
         
          (println (Label-name thenBranch) ": ") 
@@ -144,6 +149,40 @@
 
          ))]))
 
+(define (whileExpr->llvm node)
+  (match node
+    [(WhileExpr test body)
+     (begin
+       (let* ([testBranch (make-label)]
+              [bodyBranch (make-label)]
+              [endBranch (make-label)]
+
+              )
+
+         (emit-jump testBranch)
+         (println (Label-name testBranch)": ")
+         (ast->llvm test)
+         (let ([testCaseRes (get-note test 'result)])
+          
+          
+
+           (emit-branch testCaseRes bodyBranch endBranch)
+          
+           (println (Label-name bodyBranch) ": ")
+          
+           (ast->llvm body)
+         
+           (emit-jump testBranch)
+          
+           (println (Label-name endBranch) ": ")
+          
+           (add-note node 'result (emit-WhileVoid)))
+
+         ))]))
+          
+          
+          
+
   
 
 ;VarDecls
@@ -151,11 +190,9 @@
   (match node
     [(VarDecl type id expr)
      (begin
-     ;  (printf "~n HELLO FROM VARDECL ")
        (let* ([nodeRet (ast->llvm expr)]
               [emitRet (emit-varDecl type id (get-note expr 'result))]
               [varvalue (get-note node 'type)])
-        ; (printf "~n HELLO FROM VARDECL 2")
          
          (add-note node 'result emitRet)
          (t:set-VarValue-result! varvalue emitRet))
@@ -166,13 +203,10 @@
   
   (match node
     [(VarExpr name)
-     (printf "~n Var Value from VE~a" (t:VarValue name #f)) 
      (let* ([type (get-note node 'type)]
             [result (t:VarValue-result (get-note node 'varval))]
             [emitRet (emit-varExpr type result)])
-       (printf "~n Result from Let : ~a" result)
-       (printf "~n EmitRes from Let : ~a" emitRet)
-
+      
        (add-note node 'result emitRet))]))
 
 
@@ -190,10 +224,7 @@
             
             [varvalue  (get-note name 'varval)]
             [emitRet (emit-assign (t:VarValue-result varvalue) (get-note expr 'result))])
-            ;[varRes (t:VarValue-result varvalue)])
-      ; (printf "~n HELLO SAYS LE ASSIGNMENT!!!!")
-       ;(printf "~n Var Value from AssExpr ~a" emitRet)
-       ;(add-note node 'result varvalue) ; was prev. (add-note node 'result emitRet)
+      
        (add-note node 'result emitRet)
        (t:set-VarValue-result! varvalue emitRet)
        )]))

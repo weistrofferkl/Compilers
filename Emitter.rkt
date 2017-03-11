@@ -376,6 +376,9 @@
 (define (emit-phi phiThing thenBranch elseBranch thenVar elseVar)
   (println (result->string phiThing) " = phi i64 [ " (result->string thenVar) ", %" (Label-name thenBranch)" ], [ " (result->string elseVar)", %" (Label-name elseBranch) " ]")
   phiThing)
+
+(define (emit-WhileVoid)
+  (println "ret i32 0"))
   
 
 (define (get-type-name nitype)
