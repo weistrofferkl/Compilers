@@ -327,8 +327,10 @@
              [results
               (map (lambda (arg)
                      (let ([argument (make-temp-result)])
-                       (t:set-VarValue-result! argument (t:NameTypePair-result arg)) argument))
-                   (get-note node 'FunVal (t:FunValue-parameters node)))])
+                       (printf "~n arg ~a" arg) ;(t:NameTypePair-result arg)
+                       (t:set-VarValue-result! (t:NameTypePair-result arg) argument)))
+                   
+                   (t:FunValue-parameters (get-note node 'FunVal)))])
                        
 
                      

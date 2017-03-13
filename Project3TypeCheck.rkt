@@ -60,10 +60,13 @@
 (define (nameFields fields env)
   ;  (printf "fields: ~a~n" fields)
   (map (lambda (field)
-         (types:NameTypePair
+         (let ([NTPair 
+         (types:NameTypePair                
           (apply-env env (string->symbol (TypeField-kind field)))
-          (string->symbol (TypeField-name field))))
-       fields))
+          (string->symbol (TypeField-name field)))])
+           (types:set-NameTypePair-result! NTPair (types:VarValue (apply-env env (string->symbol (TypeField-kind field))) #f))
+           NTPair)) fields)
+       )
 
 (define (findit item lst)
   (cond
@@ -91,7 +94,7 @@
 ;[(types:PengType? (string->symbol(FieldAssign-name(first assignments)))) (recordSearch (rest assignments) env recTy (rest recTyFields) inLoop)]))
 
 (define (funSearch pars env funTy funTyFields inLoop)
-  ; (printf "FunRettype: ~a~n"(types:FunValue-return-type funTy))
+   ;(printf "FunRettype: ~a~n"(types:FunValue-return-type funTy))
   (cond
     [(and(null? pars) (null? funTyFields)) (types:FunValue-return-type funTy)]
     [(not(equal? (length pars) (length funTyFields))) (error "Lengths not equal")]
@@ -105,23 +108,6 @@
      (begin
        ;  (printf "~n~n******firsttype: ~a,~n******second type: ~a~n" (typeCheck (first pars) env inLoop) (types:actual-type(types:NiType-actual (first funTyFields))))
        (error "Funsearch broke"))]))
-
-;Used in FunDecls --> Push Scope, extend environment for arguments, return body type
-(define (enterNewScope funName args rettype body env)
-  (let* ([newEnv (push-scope env)] 
-         [rTy  (if (equal? rettype #f) (types:make-VoidType)
-                   (begin (apply-env newEnv (string->symbol rettype))))])
-    (for-each(lambda (arg)
-               (let ([argName (string->symbol(TypeField-name arg))]
-                     [argKind (apply-env env (string->symbol (TypeField-kind arg)))])
-
-                 
-                 (extend-env newEnv argName (types:VarValue argKind #f)))) args)
-
-    (cond
-      [(equal? (typeCheck body newEnv #f) rTy)(extend-env env (string->symbol funName) (types:FunValue (nameFields args newEnv) rTy)) rTy]
-      [(null? body) (types:make-VoidType)]
-      [else (error "FunDecl Error")])))
 
 ;Mutual Recursion: Modified For-Each
 
@@ -166,7 +152,7 @@
                                      (begin (apply-env env (string->symbol rettype))))]
                            [FuncVal (types:FunValue nameList rTy)])
                      
-                         
+                         (printf "~n NAMEFIELDS ~a" nameList)
                         (add-note decl 'FunVal FuncVal)
                        (extend-env env (string->symbol name) FuncVal)
 
@@ -185,21 +171,22 @@
                    ;When eval a function, look it up in the env and extend that env with the parameters of the funct
                    ;typecheck the body and make sure the body return type matches the declared return type
                    (let* ([newScopeEnv (push-scope env)]
+                          ; grab the fun val here
                           [funTy (apply-env env (string->symbol name))]
-
                           [rTy  (if (eq? #f rettype) (types:make-VoidType) (apply-env env (string->symbol rettype)))])
 
-                     (for-each(lambda (args)
-                                (let* ([argName (string->symbol(TypeField-name args))]
-                                      [argKind (apply-env env (string->symbol (TypeField-kind args)))]
-                                      [vartype (types:VarValue argKind #f)])
-                                  
-                                  (add-note decl 'varvalue vartype)
-                                  (extend-env newScopeEnv argName vartype)
+                     ; extend the environment with the varvalues associated with each parameter
+                     (for-each (lambda (arg)
+                                (let* ([argName (types:NameTypePair-name arg)]
+                                       ;[argKind (apply-env env (string->symbol (types:NameTypePair-result arg)))])
+                                       [argKind (types:NameTypePair-result arg)])
+                                      ;[vartype (types:VarValue argKind #f)])
+                                      
+                                  ;(types:set-NameTypePair-result! arg vartype)
+                                  ;(add-note decl 'varvalue vartype)
+                                  (extend-env newScopeEnv argName argKind)
 
-                                  )) args)
-
-
+                                  )) (types:FunValue-parameters funTy))
 
                      (if (equal? (typeCheck body newScopeEnv inLoop) rTy) rTy (error "Not equal to return type"))
                   
@@ -330,19 +317,15 @@
 
     
            ;NameType
-           ;[(NameType name kind next) (let ([nameSym (string->symbol name)])
-           ;   (extend-env env nameSym (types:actual-type(apply-env env (string->symbol kind)))))]
+     
            [(NameType name kind next) (typeCheckTD ast env name)]
 
            ;RecordType
-           ; [(RecordType name fields next) (let ([nameSym (string->symbol name)])
-                                        
-           ;(extend-env env nameSym (types:make-RecordType (nameFields fields env))))]
+           
            [(RecordType name fields next) (typeCheckTD ast env name)]
                  
            ;ArrayType
-           ;[(ArrayType name kind next) (let ([nameSym (string->symbol name)])
-           ;(extend-env env nameSym (types:make-ArrayType (apply-env env (string->symbol kind)))))]
+          
            [(ArrayType name kind next) (typeCheckTD ast env name)]
 
            ;Numbers
@@ -360,15 +343,10 @@
                                (add-note ast 'type ty)
                                ty)]
            ;Array Expression (BracketAccess):
-           ;(typeCheck expr env)
-           [(ArrayExpr name expr) (let* ([nameAr (typeCheck name env inLoop)] ;(string->symbol expr)
+           [(ArrayExpr name expr) (let* ([nameAr (typeCheck name env inLoop)] 
                                          [arField (typeCheck expr env inLoop)]
                                          [arType (types:ArrayType-element-type (types:actual-type nameAr))])
-                                    ;(printf "BracketName ~a~n" nameAr)
-                                    ;(printf "BracketExpr ~a~n" arField)
-                                    ;(printf "BracketType ~a~n" arType)
-                                    ;(printf "EXPR ~a~n" expr)
-                             
+                                    
                                     (cond
                                       [(and (types:ArrayType?  (types:actual-type nameAr)) (types:IntType? arField)) arType]
                                       [else (error "Not a valid Array Access")]))]
@@ -389,8 +367,8 @@
                                
            ;Variable Expression:
            [(VarExpr name) (let ([t1 (apply-env env(string->symbol name))])
-                             ;(printf "VAR~a~n" t1)
-                             ;(printf "NAME~a~n" name)
+                             (printf "VarExpr lookup is: ~a~n" t1)
+                             (printf "NAME~a~n" name)
                              (cond
                                ;[(and(types:VarValue? t1)(equal? (types:VarValue-readOnly t1) #t)) (error "Accessing a read-only variable")]
                                [(equal? name "true") (types:make-BoolType)]
@@ -405,7 +383,7 @@
            ;Math Expressions:
            [(MathExpr e1 op e2) (let ([t1 (typeCheck e1 env inLoop)]
                                       [t2 (typeCheck e2 env inLoop)])
-                                  ;(printf "~n~ne1 and e2 ~a~a~n" e1 e2)
+                                  (printf "~n~ne1 and e2 ~a~a~n" t1 t2)
                                   (if (and (types:IntType? t1) (types:IntType? t2))
                                       (begin
                                         (add-note ast 'type (types:IntType '()))
