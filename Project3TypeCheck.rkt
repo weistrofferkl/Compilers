@@ -144,6 +144,8 @@
                     [(FunDecl name args rettype body next)
                    
                      (set! nameList (cons (string->symbol name) nameList))
+                     ;(printf "~n ARGS FROM FUNDECL ~a" args)
+                     ;(printf "~n ENV FROM FUNDECL ~a" env)
 
                 
                      (let* ([nameList (nameFields args env)]
@@ -153,6 +155,9 @@
                            [FuncVal (types:FunValue nameList rTy)])
                      
                          (printf "~n NAMEFIELDS ~a" nameList)
+                       (printf "~n rTy ~a" rTy)
+                       (printf "~n FuncVal ~a" FuncVal)
+                       
                         (add-note decl 'FunVal FuncVal)
                        (extend-env env (string->symbol name) FuncVal)
 

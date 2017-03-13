@@ -323,19 +323,23 @@
     [(FunDecl name args rettype body next)
      (begin
 
+       (printf "~nFunVal: ~a~n" (get-note node 'FunVal))
        (let ([globalFunc (make-global-result)]
              [results
               (map (lambda (arg)
                      (let ([argument (make-temp-result)])
                        (printf "~n arg ~a" arg) ;(t:NameTypePair-result arg)
-                       (t:set-VarValue-result! (t:NameTypePair-result arg) argument)))
+                       (t:set-VarValue-result! (t:NameTypePair-result arg) argument)
+                       argument))
                    
                    (t:FunValue-parameters (get-note node 'FunVal)))])
                        
-
-                     
+        ; (printf" ~n KOL")
+         (printf" ~n results ~a" results)
          (emit-func globalFunc results)
+          (printf" ~n body ~a" body)
          (ast->llvm body)
+          (printf" ~n 09")
          (emit-closeBr)
          ))]))
        

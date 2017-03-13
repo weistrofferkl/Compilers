@@ -113,7 +113,7 @@
 ; it with cc -c NiStdLib.c to get a NiStdLib.o file, which we can then compile along
 ; with the generated source, so cc NiStdLib.o *.ll
 (define (emit-standard-library)  
-   ; now just linking with the object file, seems easier, less chance for error
+  ; now just linking with the object file, seems easier, less chance for error
   (println "; STANDARD LIB DECLARATIONS")
   (println "declare %struct.string* @makeString(i8* %str)")
   (println "declare %struct.string* @getChar()")
@@ -242,11 +242,11 @@
 
   (let* ([result (make-temp-result)]
          [resstr (result->string result)])
-  (cond
-    [val (println resstr " = add i1 1 , 0")]
-    [else (println resstr " = add i1 0 , 0")]
+    (cond
+      [val (println resstr " = add i1 1 , 0")]
+      [else (println resstr " = add i1 0 , 0")]
   
- ) result))
+      ) result))
 
 ;Emit Boolean Exprs
 (define (boolsym? sym)
@@ -258,13 +258,13 @@
     (let ([resstr (result->string result)]
           [tyname "i64 "])
       (cond     
-      [(eq? boolsym 'eq) (println resstr " = icmp eq " tyname v1str ", " v2str)]
-      [(eq? boolsym 'ne) (println resstr " = icmp ne " tyname v1str ", " v2str)]
-      [(eq? boolsym 'lt) (println resstr " = icmp slt " tyname v1str ", " v2str)]
-      [(eq? boolsym 'gt) (println resstr " = icmp sgt " tyname v1str ", " v2str)]
-      [(eq? boolsym 'le) (println resstr " = icmp sle " tyname v1str ", " v2str)]
-      [(eq? boolsym 'ge) (println resstr " = icmp sge " tyname v1str ", " v2str)]
-      [else (raise-arguments-error 'emit-bool "boolsym must be 'eq, 'ne, 'lt, 'gt, 'le, or 'ge"
+        [(eq? boolsym 'eq) (println resstr " = icmp eq " tyname v1str ", " v2str)]
+        [(eq? boolsym 'ne) (println resstr " = icmp ne " tyname v1str ", " v2str)]
+        [(eq? boolsym 'lt) (println resstr " = icmp slt " tyname v1str ", " v2str)]
+        [(eq? boolsym 'gt) (println resstr " = icmp sgt " tyname v1str ", " v2str)]
+        [(eq? boolsym 'le) (println resstr " = icmp sle " tyname v1str ", " v2str)]
+        [(eq? boolsym 'ge) (println resstr " = icmp sge " tyname v1str ", " v2str)]
+        [else (raise-arguments-error 'emit-bool "boolsym must be 'eq, 'ne, 'lt, 'gt, 'le, or 'ge"
                                      "boolsym" boolsym)]) result)))
 
 ;Emit Logic Exprs
@@ -277,10 +277,10 @@
     (let ([resstr (result->string result)]
           [tyname "i64 "])
       (cond     
-      [(eq? logicsym 'eq) (println resstr " = or " tyname v1str ", " v2str)]
-      [(eq? logicsym 'ne) (println resstr " = and " tyname v1str ", " v2str)]
+        [(eq? logicsym 'eq) (println resstr " = or " tyname v1str ", " v2str)]
+        [(eq? logicsym 'ne) (println resstr " = and " tyname v1str ", " v2str)]
       
-      [else (raise-arguments-error 'emit-logic "logicsym must be 'or, or 'and"
+        [else (raise-arguments-error 'emit-logic "logicsym must be 'or, or 'and"
                                      "logicsym" logicsym)]) result)))
 
 ;Emit VarDecl
@@ -290,9 +290,9 @@
   (let* ([result (make-label-result)]
          [struStr (result->string expr)]
          [resstr (result->string result)])    
-         (println resstr " = alloca i64, align 8")
-         (println "store i64 " struStr", i64* " resstr)
-         result))
+    (println resstr " = alloca i64, align 8")
+    (println "store i64 " struStr", i64* " resstr)
+    result))
 
 ;Assignment Expression
 (define (emit-assign name expr)
@@ -308,7 +308,7 @@
 
 ;varExpression
 (define (emit-varExpr type res)
-   (emit-comment "Var Expression")
+  (emit-comment "Var Expression")
   (printf "type: ~a, res: ~a~n" type res)
   (let* ([result (make-temp-result)]
         
@@ -327,41 +327,41 @@
   
   (let ([result (if (VoidType? rettype) #f (make-temp-result))])
     (printf "~n Result ~a" result)
-  (cond
-    [(not(eq? #f result))
-         (print (result->string result) " = ")]
-    )
+    (cond
+      [(not(eq? #f result))
+       (print (result->string result) " = ")]
+      )
     (print "call " (get-type-name rettype) " @"name "( " )
     ;for-each passed two lists (results and types)
     (let ([count 0]
           [len (length results)])
-    (for-each (lambda (ty res)
-                 (printf "~n res1 ~a" res)
-                (print (get-type-name ty) " "
-                       (result->string res)) ;maybe source of error
-                (cond
-                  [(not(eq? count (- len 1))) (print ", ")])
-                (set! count (+ count 1))
-                ) types results))
+      (for-each (lambda (ty res)
+                  (printf "~n res1 ~a" res)
+                  (print (get-type-name ty) " "
+                         (result->string res)) ;maybe source of error
+                  (cond
+                    [(not(eq? count (- len 1))) (print ", ")])
+                  (set! count (+ count 1))
+                  ) types results))
     (println " )")
               
     ))
 
- ;Strings TO DO: HANDLE NEW LINES!!!!!
+;Strings TO DO: HANDLE NEW LINES!!!!!
 (define (emit-literal-string val)
   (begin-global-defn)
   (let* ([result (make-global-result)]
          [struc (make-global-result)]
-        [valStr(if (Result? val) (result->string val) val)]
-        [isoStr (substring valStr 1 (- (string-length valStr) 1))]
-        [llvmStr (string-append (substring valStr 0 (- (string-length valStr)1)) "\\00\"")]
-        [len (string-length isoStr)]
-        [resstr (result->string result)]
-        [strucStr (result->string struc)])
+         [valStr(if (Result? val) (result->string val) val)]
+         [isoStr (substring valStr 1 (- (string-length valStr) 1))]
+         [llvmStr (string-append (substring valStr 0 (- (string-length valStr)1)) "\\00\"")]
+         [len (string-length isoStr)]
+         [resstr (result->string result)]
+         [strucStr (result->string struc)])
     
     (println resstr " = global [" (number->string (+ len 1)) " x i8] c" llvmStr", align 1")
     (println strucStr " = global %struct.string { i64 " (number->string len) ", i8* getelementptr inbounds([" (number->string (+ len 1)) " x i8], [" (number->string (+ len 1))" x i8]* " resstr", i32 0, i32 0)}, align 8")
-  (end-global-defn) struc))
+    (end-global-defn) struc))
 
 
 (define (emit-branch var thenBranchLabel elseBranchLabel)
@@ -379,15 +379,15 @@
 
 (define (emit-inital to)
 
-   (let* ([result (make-label-result)]
+  (let* ([result (make-label-result)]
          [struStr (result->string to)]
          [resstr (result->string result)])
 
     
-         (println resstr " = alloca i64, align 8")
-         (println "store i64 " struStr", i64* " resstr)
+    (println resstr " = alloca i64, align 8")
+    (println "store i64 " struStr", i64* " resstr)
      
-         result))
+    result))
   
 (define (emit-condition holderVar holderVar2 varVal toVal)
 
@@ -398,11 +398,34 @@
 (define (emit-inc holderVar fromLabel)
   (let ([tempRes (make-temp-result)])
 
-  (println (result->string tempRes) " = add i64 1, " (result->string holderVar))
-  (println "store i64 " (result->string tempRes) ", i64* " (result->string fromLabel))))
+    (println (result->string tempRes) " = add i64 1, " (result->string holderVar))
+    (println "store i64 " (result->string tempRes) ", i64* " (result->string fromLabel))))
 
 (define (emit-func globalVar results)
-  (println "define i64 " (result->string globalVar)"(i64 " (result->string results)") {"))
+  (printf "~n HEYLO")
+  (println "define i64 " (result->string globalVar)"(i64 ")
+  (let ([count 0]
+        [len (length results)])
+    (for-each (lambda (res)
+                (printf "~n res1 ~a" res)
+                (print (result->string res))
+                         
+                (cond
+                  [(not(eq? count (- len 1))) (print ", ")])
+                (set! count (+ count 1))
+                ) results))
+  (println " ) {"))
+
+
+
+
+
+
+           
+;(for-each (lambda 
+;             (result->string results) ") {")
+;        (printf "~n HEYLO2")
+;       )
 (define (emit-closeBr)
   (println "}"))
   
