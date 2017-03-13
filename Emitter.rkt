@@ -325,10 +325,6 @@
 (define (emit-funcall name results types rettype)
   (emit-comment (string-append "calling function: " name))
   
-  ;(printf "~n VoidType? ~a" (VoidType? rettype))
-  ;(printf "~n rettype? ~a" rettype)
-  ;(printf "~n OR ~a" (or (VoidType? rettype) (eq? rettype #f)))
-  
   (let ([result (if (VoidType? rettype) #f (make-temp-result))])
     (printf "~n Result ~a" result)
   (cond
@@ -391,13 +387,24 @@
          (println resstr " = alloca i64, align 8")
          (println "store i64 " struStr", i64* " resstr)
      
-         resstr))
+         result))
   
 (define (emit-condition holderVar holderVar2 varVal toVal)
 
   
   (println (result->string holderVar) " = load i64, i64* " varVal)
   (println (result->string holderVar2) " = icmp sle i64 " (result->string holderVar)", " (result->string toVal)) holderVar2)
+
+(define (emit-inc holderVar fromLabel)
+  (let ([tempRes (make-temp-result)])
+
+  (println (result->string tempRes) " = add i64 1, " (result->string holderVar))
+  (println "store i64 " (result->string tempRes) ", i64* " (result->string fromLabel))))
+
+(define (emit-func globalVar results)
+  (println "define i64 " (result->string globalVar)"(i64 " (result->string results)") {"))
+(define (emit-closeBr)
+  (println "}"))
   
 
 (define (get-type-name nitype)

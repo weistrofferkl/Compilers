@@ -97,6 +97,8 @@
     ;Bool Val Thing Chris Had Me Add. 
     [(BoolVal _) (boolval->llvm ast)]
 
+    [(FunDecl name args rettype body next) (funDecl->llvm ast)]
+
     
     
     [_ (error "Translation node " ast " not implemented yet!")]))
@@ -199,21 +201,16 @@
            (emit-jump conBranch)
            (println (Label-name conBranch) ": ")
 
+           (t:set-VarValue-result! (get-note node 'varvalue) fromLabel)
            (let 
-               ([condRes (emit-condition holderVar holderVar2 fromLabel (get-note to 'result))])
+               ([condRes (emit-condition holderVar holderVar2 (result->string fromLabel) (get-note to 'result))])
  
              (emit-branch condRes bodyBranch endBranch)
              (println (Label-name bodyBranch)": ")
-             
-           
-             (printf "~n init ~a" init )
              (ast->llvm init)
-          
+             (emit-inc holderVar fromLabel) 
              (emit-jump conBranch)
-             
              (println (Label-name endBranch)": ")
-            
-         
              (add-note node 'result (emit-WhileVoid))))))]))
       
          
@@ -315,7 +312,29 @@
                    (get-note arg 'result)) args)]
            [types
             (map (lambda (arg)
-                   ;(ast->llvm args)
+                  
                    (get-note arg 'type))args)])
      
        (add-note node 'result (emit-funcall name results types (get-note node 'type))))]))
+
+;funDecls
+(define (funDecl->llvm node)
+  (match node
+    [(FunDecl name args rettype body next)
+     (begin
+
+       (let ([globalFunc (make-global-result)]
+             [results
+              (map (lambda (arg)
+                     (let ([argument (make-temp-result)])
+                       (t:set-VarValue-result! argument (t:NameTypePair-result arg)) argument))
+                   (get-note node 'FunVal (t:FunValue-parameters node)))])
+                       
+
+                     
+         (emit-func globalFunc results)
+         (ast->llvm body)
+         (emit-closeBr)
+         ))]))
+       
+       

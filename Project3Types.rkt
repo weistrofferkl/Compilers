@@ -24,7 +24,7 @@
 (struct RecordType NiType (fields) #:transparent)
 ; in this case, the name is the symbol name of a field, 
 ; and actual will refer to the actual type
-(struct NameTypePair NiType (name) #:transparent)
+(struct NameTypePair NiType (name [result #:auto #:mutable]) #:transparent #:auto-value #f)
 
 
 ;do actual type
