@@ -94,7 +94,7 @@
 ;[(types:PengType? (string->symbol(FieldAssign-name(first assignments)))) (recordSearch (rest assignments) env recTy (rest recTyFields) inLoop)]))
 
 (define (funSearch pars env funTy funTyFields inLoop)
-   ;(printf "FunRettype: ~a~n"(types:FunValue-return-type funTy))
+
   (cond
     [(and(null? pars) (null? funTyFields)) (types:FunValue-return-type funTy)]
     [(not(equal? (length pars) (length funTyFields))) (error "Lengths not equal")]
@@ -102,11 +102,10 @@
     ; if the typechecked expression in the first FieldAssign matches the type of the first NameTypePair
     [(correctComparison (types:actual-type(typeCheck (first pars) env inLoop)) (types:actual-type(types:NiType-actual (first funTyFields))))
      (begin
-       ; (printf "~n~nfirsttype: ~a, second type: ~a~n" (typeCheck (first pars) env inLoop) (types:actual-type(types:NiType-actual (first funTyFields))))
        (funSearch (rest pars) env funTy (rest funTyFields) inLoop))]
     [else
      (begin
-       ;  (printf "~n~n******firsttype: ~a,~n******second type: ~a~n" (typeCheck (first pars) env inLoop) (types:actual-type(types:NiType-actual (first funTyFields))))
+       
        (error "Funsearch broke"))]))
 
 ;Mutual Recursion: Modified For-Each
@@ -143,11 +142,7 @@
                   (match decl
                     [(FunDecl name args rettype body next)
                    
-                     (set! nameList (cons (string->symbol name) nameList))
-                     ;(printf "~n ARGS FROM FUNDECL ~a" args)
-                     ;(printf "~n ENV FROM FUNDECL ~a" env)
-
-                
+                     (set! nameList (cons (string->symbol name) nameList))                
                      (let* ([nameList (nameFields args env)]
                            
                            [rTy  (if (equal? rettype #f) (types:make-VoidType)
@@ -187,8 +182,7 @@
                                        [argKind (types:NameTypePair-result arg)])
                                       ;[vartype (types:VarValue argKind #f)])
                                       
-                                  ;(types:set-NameTypePair-result! arg vartype)
-                                  ;(add-note decl 'varvalue vartype)
+                                  
                                   (extend-env newScopeEnv argName argKind)
 
                                   )) (types:FunValue-parameters funTy))
@@ -565,10 +559,10 @@
            [(FuncallExpr name args);(begin (printf "env in FunCall : ~a~n" env)
             (let ([id (apply-env env (string->symbol name))]
                   [argList (typeCheck args env inLoop)])
-              ;    (printf "ARGLIST ~a~n" argList)
+               ;   (printf "ARGLIST ~a~n" argList)
               (let ([funStore 
                      (funSearch args env id (types:FunValue-parameters id) inLoop)])
-                (printf "~a " funStore)
+                (printf "~n FUNSTORE ~a " funStore)
                 (add-note ast 'type funStore)
                 funStore)
 

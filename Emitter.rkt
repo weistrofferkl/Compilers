@@ -335,8 +335,9 @@
     ;for-each passed two lists (results and types)
     (let ([count 0]
           [len (length results)])
+      (printf "~n IN FUNCALL")
       (for-each (lambda (ty res)
-                  (printf "~n res1 ~a" res)
+                ;  (printf "~n res1 ~a" res)
                   (print (get-type-name ty) " "
                          (result->string res)) ;maybe source of error
                   (cond
@@ -402,14 +403,14 @@
     (println "store i64 " (result->string tempRes) ", i64* " (result->string fromLabel))))
 
 (define (emit-func globalVar results)
-  (printf "~n HEYLO")
+ ; (printf "~n HEYLO")
   (println "define i64 " (result->string globalVar)"(i64 ")
   (let ([count 0]
         [len (length results)])
     (for-each (lambda (res)
-                (printf "~n res1 ~a" res)
-                (print (result->string res))
-                         
+               ; (printf "~n res1 ~a" res)
+                (print (result->string res)) " "
+                      ; (result->string res))
                 (cond
                   [(not(eq? count (- len 1))) (print ", ")])
                 (set! count (+ count 1))
