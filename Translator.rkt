@@ -151,7 +151,9 @@
 
          (println (Label-name endBranch) ": ")
 
-         (add-note node 'result (emit-phi phiThing thenBranch elseBranch (get-note true-branch 'result) (get-note false-branch 'result)))
+        (unless (t:VoidType? (get-note true-branch 'type))
+
+         (add-note node 'result (emit-phi phiThing thenBranch elseBranch (get-note true-branch 'result) (get-note false-branch 'result))))
 
          ))]))
 

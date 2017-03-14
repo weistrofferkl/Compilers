@@ -128,6 +128,7 @@
   (println "declare %struct.string* @intToString(i64 %val)")
   (println "declare %struct.array* @makeArray(i64 %numElements)")
   (println "declare i64* @getElementAddressAt(%struct.array* %arr, i64 %index)")
+  (println "declare i64 @stringCompare(%struct.string* %str1, %struct.string* %str2)")
   (println "; Function Attrs: nounwind")
   (println "declare noalias i8* @malloc(i64) #1"))
 
@@ -280,17 +281,17 @@
 
           ; %t1 = add i164 -1, 0
           ; %t2 = icmp eq i64 %t0, %t1
-          (println (result->string res) " = call i64 stringCompare( %struct.string * " v1str", %struct.string * " v2str" )")
+          (println (result->string res) " = call i64 @stringCompare( %struct.string * " v1str", %struct.string * " v2str" )")
           (cond
             [(eq? boolsym 'eq) (begin
                                  (println (result->string oper) " = add i64 0, 0")
-                                 (println (result->string comp) " icmp eq i64 " (result->string res) ", " (result->string oper)))]
+                                 (println (result->string comp) " = icmp eq i64 " (result->string res) ", " (result->string oper)))]
             [(eq? boolsym 'lt) (begin
                                  (println (result->string oper) " = add i64 -1, 0")
-                                 (println (result->string comp) " icmp slt i64 " (result->string res) ", " (result->string oper)))]
+                                 (println (result->string comp) " = icmp slt i64 " (result->string res) ", " (result->string oper)))]
             [(eq? boolsym 'gt) (begin
                                  (println (result->string oper) " = add i64 1, 0")
-                                 (println (result->string comp) " icmp sgt i64 " (result->string res) ", " (result->string oper)))]
+                                 (println (result->string comp) " = icmp sgt i64 " (result->string res) ", " (result->string oper)))]
             [else (raise-arguments-error 'emit-bool "boolsym must be 'eq, 'lt, 'gt")]
                                     
             ) comp))
