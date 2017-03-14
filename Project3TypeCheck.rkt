@@ -16,6 +16,7 @@
     (extend-env env 'string (types:make-StringType))
     (extend-env env 'bool (types:make-BoolType))
     (extend-env env 'peng (types:make-PengType))
+    (extend-env env 'stringCompare (types:make-StringType))
     (extend-env env 'print (types:FunValue (list (types:NameTypePair (types:make-StringType) 's )) (types:make-VoidType)))
     (extend-env env 'printi (types:FunValue (list (types:NameTypePair (types:make-IntType) 'x))(types:make-VoidType)))
     (extend-env env 'flush (types:FunValue '() (types:make-VoidType)))
@@ -563,6 +564,7 @@
               (let ([funStore 
                      (funSearch args env id (types:FunValue-parameters id) inLoop)])
                 (printf "~n FUNSTORE ~a " funStore)
+                (add-note ast 'FunVal id)
                 (add-note ast 'type funStore)
                 funStore)
 

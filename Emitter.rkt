@@ -252,9 +252,12 @@
 (define (boolsym? sym)
   (and (symbol? sym) (or (eq? sym 'eq) (eq? sym 'ne) (eq? sym 'lt) (eq? sym 'gt) (eq? sym 'le) (eq? sym 'ge))))
 
-(define (emit-bool boolsym v1 v2 [result (make-temp-result)] )
+(define (emit-bool boolsym v1 v2 v1ty v2ty [result (make-temp-result)] )
+
+  (if (and (IntType? v1ty) (IntType? v2ty))
   (let ([v1str (if (Result? v1) (result->string v1) v1)]
         [v2str (if (Result? v2) (result->string v2) v2)])
+    
     (let ([resstr (result->string result)]
           [tyname "i64 "])
       (cond     
@@ -265,7 +268,38 @@
         [(eq? boolsym 'le) (println resstr " = icmp sle " tyname v1str ", " v2str)]
         [(eq? boolsym 'ge) (println resstr " = icmp sge " tyname v1str ", " v2str)]
         [else (raise-arguments-error 'emit-bool "boolsym must be 'eq, 'ne, 'lt, 'gt, 'le, or 'ge"
-                                     "boolsym" boolsym)]) result)))
+                                     "boolsym" boolsym)]) result))
+
+  (let ([v1str (if (Result? v1) (result->string v1) v1)]
+        [v2str (if (Result? v2) (result->string v2) v2)])
+  ;"%t0 = call i1 stringCompare( %struct.string * %t2, %struct.string * %t3 )"
+    (let* ([res (make-temp-result)]
+         
+          [oper (make-temp-result)]
+          [comp (make-temp-result)])
+
+      ; %t1 = add i164 -1, 0
+      ; %t2 = icmp eq i64 %t0, %t1
+      (println (result->string res) " = call i64 stringCompare( %struct.string * " v1str", %struct.string * " v2str" )")
+      (cond
+        [(eq? boolsym 'eq) (begin
+                             (println (result->string oper) " = add i64 0, 0")
+                             (println (result->string comp) " icmp eq i64 " (result->string res) ", " (result->string oper)))]
+        [(eq? boolsym 'lt) (begin
+                             (println (result->string oper) " = add i64 -1, 0")
+                             (println (result->string comp) " icmp slt i64 " (result->string res) ", " (result->string oper)))]
+        [(eq? boolsym 'gt) (begin
+                             (println (result->string oper) " = add i64 1, 0")
+                             (println (result->string comp) " icmp sgt i64 " (result->string res) ", " (result->string oper)))]
+        [else (raise-arguments-error 'emit-bool "boolsym must be 'eq, 'lt, 'gt")]
+                                    
+        ) comp))
+          
+    
+    
+    
+
+  ))
 
 ;Emit Logic Exprs
 (define (logicsym? sym)
@@ -328,7 +362,7 @@
       [(not(eq? #f result))
        (print (result->string result) " = ")]
       )
-    (print "call " (get-type-name rettype) " @"name "( " )
+    (print "call " (get-type-name rettype) " " name "( " )
     ;for-each passed two lists (results and types)
     (let ([count 0]
           [len (length results)])

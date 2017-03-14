@@ -64,4 +64,4 @@
 (struct VarValue (type readOnly [result #:auto #:mutable]) #:transparent #:auto-value #f)
 ; as with records, we need something for parameters,
 ; so this will be stored as a list of NameTypePair structs
-(struct FunValue (parameters return-type) #:transparent)
+(struct FunValue (parameters return-type [result #:auto #:mutable]) #:transparent #:auto-value #f)

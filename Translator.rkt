@@ -233,9 +233,14 @@
     [(VarExpr name)
      (let* ([type (get-note node 'type)]
             [result (t:VarValue-result (get-note node 'varval))]
-            [emitRet (emit-varExpr type result)])
+            [emitRet (if (or (or (isPointer result) (global? result)) (in-frame? result)) (emit-varExpr type result) result)])
       
        (add-note node 'result emitRet))]))
+
+(define (isPointer type)
+
+  (if (or (or (t:StringType? 'string) (t:RecordType? type)) (t:ArrayType? type)) #t #f)
+  )
 
 
 ;Assignment Expression
@@ -278,7 +283,11 @@
 
   (let* ([var1 (get-note v1 'result)]
          [var2 (get-note v2 'result)]
-         [result (emit-bool op var1 var2)])
+         [v1Ty (get-note v1 'type)]
+         [v2Ty (get-note v2 'type)]
+         [result (emit-bool op var1 var2 v1Ty v2Ty)])
+
+    (printf "~n V1 ~a " (t:IntType? (get-note v1 'type)))
     (add-note node 'result result)))
 
 ;Logic Expressions
@@ -295,7 +304,7 @@
 (define (funcall->llvm node)
   (match node
     [(FuncallExpr name args)
-     (let ([results 
+     (let* ([results 
             (map (lambda (arg)
                    (ast->llvm arg)
                    
@@ -303,9 +312,14 @@
            [types
             (map (lambda (arg)
                   
-                   (get-note arg 'type))args)])
+                   (get-note arg 'type))args)]
+          [nameLabel (t:FunValue-result (get-note node 'FunVal))]
+          [nameForPrint (if (eq? nameLabel #f) (string-append "@" name) (result->string nameLabel))]
+
+          )
+       (printf "~n NameLab ~a" nameLabel)
      
-       (add-note node 'result (emit-funcall name results types (get-note node 'type))))]))
+       (add-note node 'result (emit-funcall nameForPrint results types (get-note node 'type))))]))
 
 ;funDecls
 (define (funDecl->llvm node)
@@ -314,20 +328,22 @@
      (begin
        (begin-fun-defn)
        ;(printf "~nFunVal: ~a~n" (get-note node 'FunVal))
-       (let ([globalFunc (make-global-result)]
+       (let* ([globalFunc (make-global-result)]
+             [funVal  (get-note node 'FunVal)]
              [results
               (map (lambda (arg)
                      (let ([argument (make-temp-result)])
+                      
                        (printf "~n arg ~a" arg) 
                        (t:set-VarValue-result! (t:NameTypePair-result arg) argument)
                        argument))
                    
-                   (t:FunValue-parameters (get-note node 'FunVal)))])
+                   (t:FunValue-parameters funVal))])
                        
       
          (printf" ~n results ~a" results)
          (emit-func globalFunc results)
-         ; (printf" ~n bodyAST ~a" )
+         (t:set-FunValue-result! funVal globalFunc)
          (ast->llvm body)
          
          (let
