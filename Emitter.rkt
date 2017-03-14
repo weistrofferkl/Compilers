@@ -315,11 +315,8 @@
          [resStr (result->string res)] ;resStr = %L1
          [struStr (result->string result)]) ;struStr = %t
     
-    (println struStr " = load i64, i64* " resStr) result))
-
-
-  
-
+    (println struStr " = load i64, i64* " resStr)
+    result))
 
 ;Emit Function Calls
 (define (emit-funcall name results types rettype)
@@ -346,7 +343,7 @@
                   ) types results))
     (println " )")
               
-    ))
+    result))
 
 ;Strings TO DO: HANDLE NEW LINES!!!!!
 (define (emit-literal-string val)
@@ -402,31 +399,32 @@
     (println (result->string tempRes) " = add i64 1, " (result->string holderVar))
     (println "store i64 " (result->string tempRes) ", i64* " (result->string fromLabel))))
 
+
+
 (define (emit-func globalVar results)
  ; (printf "~n HEYLO")
+ ; (begin-fun-defn)
   (println "define i64 " (result->string globalVar)"(i64 ")
   (let ([count 0]
         [len (length results)])
+
+    
     (for-each (lambda (res)
                ; (printf "~n res1 ~a" res)
                 (print (result->string res)) " "
-                      ; (result->string res))
                 (cond
                   [(not(eq? count (- len 1))) (print ", ")])
                 (set! count (+ count 1))
                 ) results))
-  (println " ) {"))
+  (println " ) {")
+  ;(end-fun-defn)
+  )
+
+(define (emit-retType rTy tk)
+  (if (eq? rTy "void") (println "ret void") (println "ret i64 "(result->string tk)))
+  )
 
 
-
-
-
-
-           
-;(for-each (lambda 
-;             (result->string results) ") {")
-;        (printf "~n HEYLO2")
-;       )
 (define (emit-closeBr)
   (println "}"))
   

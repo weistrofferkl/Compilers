@@ -212,13 +212,6 @@
              (emit-jump conBranch)
              (println (Label-name endBranch)": ")
              (add-note node 'result (emit-WhileVoid))))))]))
-      
-         
-          
-          
-          
-
-  
 
 ;VarDecls
 (define (vardecl->llvm node)
@@ -243,9 +236,6 @@
             [emitRet (emit-varExpr type result)])
       
        (add-note node 'result emitRet))]))
-
-
-                        
 
 
 ;Assignment Expression
@@ -322,25 +312,29 @@
   (match node
     [(FunDecl name args rettype body next)
      (begin
-
-       (printf "~nFunVal: ~a~n" (get-note node 'FunVal))
+       (begin-fun-defn)
+       ;(printf "~nFunVal: ~a~n" (get-note node 'FunVal))
        (let ([globalFunc (make-global-result)]
              [results
               (map (lambda (arg)
                      (let ([argument (make-temp-result)])
-                       (printf "~n arg ~a" arg) ;(t:NameTypePair-result arg)
+                       (printf "~n arg ~a" arg) 
                        (t:set-VarValue-result! (t:NameTypePair-result arg) argument)
                        argument))
                    
                    (t:FunValue-parameters (get-note node 'FunVal)))])
                        
-        ; (printf" ~n KOL")
+      
          (printf" ~n results ~a" results)
          (emit-func globalFunc results)
-          (printf" ~n body ~a" body)
+         ; (printf" ~n bodyAST ~a" )
          (ast->llvm body)
-        ;  (printf" ~n 09")
+         
+         (let
+             ([lastTemp (get-note body 'result)])
+           (emit-retType rettype lastTemp))
          (emit-closeBr)
+         (end-fun-defn)
          ))]))
        
        
