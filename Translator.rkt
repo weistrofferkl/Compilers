@@ -327,7 +327,7 @@
     [(FunDecl name args rettype body next)
      (begin
        (begin-fun-defn)
-       ;(printf "~nFunVal: ~a~n" (get-note node 'FunVal))
+
        (let* ([globalFunc (make-global-result)]
              [funVal  (get-note node 'FunVal)]
              [results

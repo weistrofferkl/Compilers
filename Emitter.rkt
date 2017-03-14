@@ -255,51 +255,51 @@
 (define (emit-bool boolsym v1 v2 v1ty v2ty [result (make-temp-result)] )
 
   (if (and (IntType? v1ty) (IntType? v2ty))
-  (let ([v1str (if (Result? v1) (result->string v1) v1)]
-        [v2str (if (Result? v2) (result->string v2) v2)])
+      (let ([v1str (if (Result? v1) (result->string v1) v1)]
+            [v2str (if (Result? v2) (result->string v2) v2)])
     
-    (let ([resstr (result->string result)]
-          [tyname "i64 "])
-      (cond     
-        [(eq? boolsym 'eq) (println resstr " = icmp eq " tyname v1str ", " v2str)]
-        [(eq? boolsym 'ne) (println resstr " = icmp ne " tyname v1str ", " v2str)]
-        [(eq? boolsym 'lt) (println resstr " = icmp slt " tyname v1str ", " v2str)]
-        [(eq? boolsym 'gt) (println resstr " = icmp sgt " tyname v1str ", " v2str)]
-        [(eq? boolsym 'le) (println resstr " = icmp sle " tyname v1str ", " v2str)]
-        [(eq? boolsym 'ge) (println resstr " = icmp sge " tyname v1str ", " v2str)]
-        [else (raise-arguments-error 'emit-bool "boolsym must be 'eq, 'ne, 'lt, 'gt, 'le, or 'ge"
-                                     "boolsym" boolsym)]) result))
+        (let ([resstr (result->string result)]
+              [tyname "i64 "])
+          (cond     
+            [(eq? boolsym 'eq) (println resstr " = icmp eq " tyname v1str ", " v2str)]
+            [(eq? boolsym 'ne) (println resstr " = icmp ne " tyname v1str ", " v2str)]
+            [(eq? boolsym 'lt) (println resstr " = icmp slt " tyname v1str ", " v2str)]
+            [(eq? boolsym 'gt) (println resstr " = icmp sgt " tyname v1str ", " v2str)]
+            [(eq? boolsym 'le) (println resstr " = icmp sle " tyname v1str ", " v2str)]
+            [(eq? boolsym 'ge) (println resstr " = icmp sge " tyname v1str ", " v2str)]
+            [else (raise-arguments-error 'emit-bool "boolsym must be 'eq, 'ne, 'lt, 'gt, 'le, or 'ge"
+                                         "boolsym" boolsym)]) result))
 
-  (let ([v1str (if (Result? v1) (result->string v1) v1)]
-        [v2str (if (Result? v2) (result->string v2) v2)])
-  ;"%t0 = call i1 stringCompare( %struct.string * %t2, %struct.string * %t3 )"
-    (let* ([res (make-temp-result)]
+      (let ([v1str (if (Result? v1) (result->string v1) v1)]
+            [v2str (if (Result? v2) (result->string v2) v2)])
+        ;"%t0 = call i1 stringCompare( %struct.string * %t2, %struct.string * %t3 )"
+        (let* ([res (make-temp-result)]
          
-          [oper (make-temp-result)]
-          [comp (make-temp-result)])
+               [oper (make-temp-result)]
+               [comp (make-temp-result)])
 
-      ; %t1 = add i164 -1, 0
-      ; %t2 = icmp eq i64 %t0, %t1
-      (println (result->string res) " = call i64 stringCompare( %struct.string * " v1str", %struct.string * " v2str" )")
-      (cond
-        [(eq? boolsym 'eq) (begin
-                             (println (result->string oper) " = add i64 0, 0")
-                             (println (result->string comp) " icmp eq i64 " (result->string res) ", " (result->string oper)))]
-        [(eq? boolsym 'lt) (begin
-                             (println (result->string oper) " = add i64 -1, 0")
-                             (println (result->string comp) " icmp slt i64 " (result->string res) ", " (result->string oper)))]
-        [(eq? boolsym 'gt) (begin
-                             (println (result->string oper) " = add i64 1, 0")
-                             (println (result->string comp) " icmp sgt i64 " (result->string res) ", " (result->string oper)))]
-        [else (raise-arguments-error 'emit-bool "boolsym must be 'eq, 'lt, 'gt")]
+          ; %t1 = add i164 -1, 0
+          ; %t2 = icmp eq i64 %t0, %t1
+          (println (result->string res) " = call i64 stringCompare( %struct.string * " v1str", %struct.string * " v2str" )")
+          (cond
+            [(eq? boolsym 'eq) (begin
+                                 (println (result->string oper) " = add i64 0, 0")
+                                 (println (result->string comp) " icmp eq i64 " (result->string res) ", " (result->string oper)))]
+            [(eq? boolsym 'lt) (begin
+                                 (println (result->string oper) " = add i64 -1, 0")
+                                 (println (result->string comp) " icmp slt i64 " (result->string res) ", " (result->string oper)))]
+            [(eq? boolsym 'gt) (begin
+                                 (println (result->string oper) " = add i64 1, 0")
+                                 (println (result->string comp) " icmp sgt i64 " (result->string res) ", " (result->string oper)))]
+            [else (raise-arguments-error 'emit-bool "boolsym must be 'eq, 'lt, 'gt")]
                                     
-        ) comp))
+            ) comp))
           
     
     
     
 
-  ))
+      ))
 
 ;Emit Logic Exprs
 (define (logicsym? sym)
@@ -368,7 +368,7 @@
           [len (length results)])
       (printf "~n IN FUNCALL")
       (for-each (lambda (ty res)
-                ;  (printf "~n res1 ~a" res)
+                  ;  (printf "~n res1 ~a" res)
                   (print (get-type-name ty) " "
                          (result->string res)) ;maybe source of error
                   (cond
@@ -385,15 +385,28 @@
   (let* ([result (make-global-result)]
          [struc (make-global-result)]
          [valStr(if (Result? val) (result->string val) val)]
-         [isoStr (substring valStr 1 (- (string-length valStr) 1))]
-         [llvmStr (string-append (substring valStr 0 (- (string-length valStr)1)) "\\00\"")]
-         [len (string-length isoStr)]
-         [resstr (result->string result)]
-         [strucStr (result->string struc)])
+         ;[isoStr (substring valStr 1 (- (string-length valStr) 1))]
+         [llvmstr (string-replace (substring valStr 1 (sub1 (string-length valStr))) "\\n" "\\0A")]
+         ; add1 because we add the null terminator to it
+         [lenval (add1 (- (string-length llvmstr)
+                          ; we multiply the diff of the new string length minus the old one
+                          ; (after subbing 2 because of quotes on the old one) because
+                          ; "\n" has a length of 2, according to racket, while "\0A" has a
+                          ; length of 3, thus we need to remove 2 characters for every
+                          ; "\n" we replaced to get the right string length according to llvm
+                          (* 2 (- (string-length llvmstr) ( - (string-length valStr) 2)))))]
+
+
+
+
+         [resultStr (string-append "\"" llvmstr "\\00\"")] ; (substring llvmstr 0 (- (string-length llvmstr)1))
+;[len (string-length isoStr)]
+[resstr (result->string result)]
+[strucStr (result->string struc)])
     
-    (println resstr " = global [" (number->string (+ len 1)) " x i8] c" llvmStr", align 1")
-    (println strucStr " = global %struct.string { i64 " (number->string len) ", i8* getelementptr inbounds([" (number->string (+ len 1)) " x i8], [" (number->string (+ len 1))" x i8]* " resstr", i32 0, i32 0)}, align 8")
-    (end-global-defn) struc))
+(println resstr " = global [" (number->string lenval) " x i8] c" resultStr", align 1")
+(println strucStr " = global %struct.string { i64 " (number->string (- lenval 1)) ", i8* getelementptr inbounds([" (number->string lenval) " x i8], [" (number->string lenval)" x i8]* " resstr", i32 0, i32 0)}, align 8")
+(end-global-defn) struc))
 
 
 (define (emit-branch var thenBranchLabel elseBranchLabel)
@@ -436,15 +449,15 @@
 
 
 (define (emit-func globalVar results)
- ; (printf "~n HEYLO")
- ; (begin-fun-defn)
+  ; (printf "~n HEYLO")
+  ; (begin-fun-defn)
   (println "define i64 " (result->string globalVar)"(i64 ")
   (let ([count 0]
         [len (length results)])
 
     
     (for-each (lambda (res)
-               ; (printf "~n res1 ~a" res)
+                ; (printf "~n res1 ~a" res)
                 (print (result->string res)) " "
                 (cond
                   [(not(eq? count (- len 1))) (print ", ")])
