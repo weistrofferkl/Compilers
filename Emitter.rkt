@@ -310,10 +310,10 @@
   (let ([v1str (if (Result? v1) (result->string v1) v1)]
         [v2str (if (Result? v2) (result->string v2) v2)])
     (let ([resstr (result->string result)]
-          [tyname "i64 "])
+          [tyname "i1 "])
       (cond     
-        [(eq? logicsym 'eq) (println resstr " = or " tyname v1str ", " v2str)]
-        [(eq? logicsym 'ne) (println resstr " = and " tyname v1str ", " v2str)]
+        [(eq? logicsym 'or) (println resstr " = or " tyname v1str ", " v2str)]
+        [(eq? logicsym 'and) (println resstr " = and " tyname v1str ", " v2str)]
       
         [else (raise-arguments-error 'emit-logic "logicsym must be 'or, or 'and"
                                      "logicsym" logicsym)]) result)))
