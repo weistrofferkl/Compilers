@@ -2,10 +2,10 @@
 
 (require "array-list.rkt"
          "iloc.rkt"
-         "niparser.rkt"
+         "Project2.rkt"
          "array-list.rkt"
          "errors.rkt"
-         "typecheck.rkt"
+         "Project3TypeCheck.rkt"
          "names.rkt"
          data/gvector)
 

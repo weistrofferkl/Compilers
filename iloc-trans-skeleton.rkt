@@ -2,12 +2,13 @@
 
 (require "array-list.rkt"
          "iloc.rkt"
-         "niparser.rkt"
+         "Project2.rkt"
          "array-list.rkt"
          "errors.rkt"
-         "typecheck.rkt"
+         "Project3TypeCheck.rkt"
          "names.rkt"
          data/gvector)
+;Booleans, Logic
 
 (provide (all-defined-out))
 ; simple translator that only outputs the stuff that you've added, not all
@@ -67,6 +68,8 @@
            [(NumExpr val) (num->iloc val alist)]
 
            [(MathExpr _ _ _) (math->iloc ast alist)]
+
+           [(BoolExpr _ _ _) (bool->iloc ast alist)]
            ; translate boolean values, which are integer 1 and 0s
            [_ (error "Translation of " ast " not implemented yet")])])
     result))
@@ -80,7 +83,6 @@
     (array-list-add-item! alist (loadI (string->number val) result #f))
     result))
 
-
 (define (math->iloc ast alist)
   (let ([e1 (MathExpr-expr1 ast)]
         [e2 (MathExpr-expr2 ast)]
@@ -90,7 +92,29 @@
           [result (make-temp-result)])
       (let ([item
              (cond
-               [(eq? op '+) (add res1 res2 result)])])
+               [(eq? op '+) (add res1 res2 result)]
+               [(eq? op '-) (sub res1 res2 result)]
+               [(eq? op '*) (mult res1 res2 result)]
+               [(eq? op '/) (div res1 res2 result)])])
+        (array-list-add-item! alist item)
+        result))))
+
+(define (bool->iloc ast alist)
+  (let ([e1 (BoolExpr-expr1 ast)]
+        [e2 (BoolExpr-expr2 ast)]
+        [op (BoolExpr-op ast)])
+    (let ([res1 (ast->iloc! e1 alist)]
+           [res2 (ast->iloc! e2 alist)]
+           [result (make-temp-result)])
+      (let ([item
+             (cond
+               [(eq? op 'eq) (cmp_EQ res1 res2 result)]
+               [(eq? op 'ne) (cmp_NE res1 res2 result)]
+               [(eq? op 'lt) (cmp_LT res1 res2 result)]
+               [(eq? op 'gt) (cmp_GT res1 res2 result)]
+               [(eq? op 'le) (cmp_LE res1 res2 result)]
+               [(eq? op 'ge) (cmp_GE res1 res2 result)]
+               [else (error "what the heck is op??")])])
         (array-list-add-item! alist item)
         result))))
         

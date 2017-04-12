@@ -12,6 +12,15 @@
   (temp-num 0)
   (label-num 0))
 
+; get the next temp number and increment it
+(define (get-next-temp-num)
+  (temp-num (add1 (temp-num)))
+  (temp-num))
+
+; increment the next temp number
+(define (get-next-label-num)
+  (label-num (add1 (label-num)))
+  (label-num))
 
 ; the temp struct
 (struct Temp (name num) #:transparent
@@ -47,19 +56,26 @@
               [else (values name global? value)])))
 
 ; get a new label
-(define (make-label [num (begin (label-num (add1 (label-num))) (label-num))])
+(define (make-label [num (get-next-label-num)])
   (Label (string-append "L" (number->string num))))
 
+(define (make-named-temp-result num)
+  (Result (make-temp num) #f #f))
+  
 ; get a new temp
-(define (make-temp [num (begin (temp-num (add1 (temp-num))) (temp-num))])
+(define (make-temp [num (get-next-temp-num)])
   (Temp (string-append "t" (number->string num)) num))
 
-;construct a global
+; construct a global
 (define (make-global-result)
   (Result (make-label) #t #f))
 
 ; construct a label result
 (define (make-label-result)
+  (Result (make-label) #f #f))
+
+; another name for making a label
+(define (make-frame-result)
   (Result (make-label) #f #f))
 
 ; construct a temp result

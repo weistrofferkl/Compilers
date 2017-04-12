@@ -1,7 +1,7 @@
 #lang racket
 
 (require "iloc.rkt"
-         "iloc-trans.rkt"
+         "iloc-trans-skeleton.rkt"
          "array-list.rkt"
          "names.rkt")
 (require rackunit
