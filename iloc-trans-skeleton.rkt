@@ -89,8 +89,8 @@
 (define (boolVal->iloc val alist)
   (let ([result (make-temp-result)])
     (cond
-      [(equal? val 1) (array-list-add-item! alist (load "true") result #f)]
-      [(equal? val 0) (array-list-add-item! alist (load "false") result #f)])
+      [(eq? val #t) (array-list-add-item! alist (loadI 1 result #f))]
+      [(eq? val #f) (array-list-add-item! alist (loadI 0 result #f))])
     result))
       
 
