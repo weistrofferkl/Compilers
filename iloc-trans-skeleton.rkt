@@ -70,7 +70,10 @@
            [(MathExpr _ _ _) (math->iloc ast alist)]
 
            [(BoolExpr _ _ _) (bool->iloc ast alist)]
+
+           [(LogicExpr _ _ _) (logic->iloc ast alist)]
            ; translate boolean values, which are integer 1 and 0s
+           [(BoolVal val) (boolVal->iloc val alist)]
            [_ (error "Translation of " ast " not implemented yet")])])
     result))
 
@@ -82,6 +85,15 @@
   (let ([result (make-temp-result)])
     (array-list-add-item! alist (loadI (string->number val) result #f))
     result))
+
+(define (boolVal->iloc val alist)
+  (let ([result (make-temp-result)])
+    (cond
+      [(equal? val 1) (array-list-add-item! alist (load "true") result #f)]
+      [(equal? val 0) (array-list-add-item! alist (load "false") result #f)])
+    result))
+      
+
 
 (define (math->iloc ast alist)
   (let ([e1 (MathExpr-expr1 ast)]
@@ -117,4 +129,19 @@
                [else (error "what the heck is op??")])])
         (array-list-add-item! alist item)
         result))))
+
+(define (logic->iloc ast alist)
+  (let ([e1 (LogicExpr-expr1 ast)]
+        [e2 (LogicExpr-expr2 ast)]
+        [op (LogicExpr-op ast)])
+    (let ([res1 (ast->iloc! e1 alist)]
+          [res2 (ast->iloc! e2 alist)]
+          [result (make-temp-result)])
+      (let ([item
+             (cond
+               [(eq? op 'and) (and res1 res2 result)]
+               [(eq? op 'or) (or res1 res2 result)])])
+        (array-list-add-item! alist item)
+        result))))
+        
         
