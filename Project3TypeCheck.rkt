@@ -16,20 +16,20 @@
     (extend-env env 'string (types:make-StringType))
     (extend-env env 'bool (types:make-BoolType))
     (extend-env env 'peng (types:make-PengType))
-    (extend-env env 'stringCompare (types:FunValue (list (types:make-StringType) (types:make-StringType)) (types:make-StringType)))
-    (extend-env env 'print (types:FunValue (list (types:NameTypePair (types:make-StringType) 's )) (types:make-VoidType)))
-    (extend-env env 'printi (types:FunValue (list (types:NameTypePair (types:make-IntType) 'x))(types:make-VoidType)))
-    (extend-env env 'flush (types:FunValue '() (types:make-VoidType)))
-    (extend-env env 'getChar (types:FunValue '() (types:make-StringType)))
-    (extend-env env 'ord (types:FunValue (list (types:NameTypePair (types:make-StringType) 's )) (types:make-IntType)))
-    (extend-env env 'chr (types:FunValue(list (types:NameTypePair (types:make-IntType) 's )) (types:make-StringType)))
-    (extend-env env 'size (types:FunValue (list (types:NameTypePair (types:make-StringType) 's )) (types:make-IntType)))
-    (extend-env env 'substring (types:FunValue(list (types:NameTypePair (types:make-StringType) 's ) (types:NameTypePair (types:make-IntType) 'first)
+    (extend-env env 'stringCompare (types:FunValue 'stringCompare (list (types:make-StringType) (types:make-StringType)) (types:make-StringType)))
+    (extend-env env 'print (types:FunValue 'print (list (types:NameTypePair (types:make-StringType) 's )) (types:make-VoidType)))
+    (extend-env env 'printi (types:FunValue 'printi (list (types:NameTypePair (types:make-IntType) 'x))(types:make-VoidType)))
+    (extend-env env 'flush (types:FunValue 'flush '() (types:make-VoidType)))
+    (extend-env env 'getChar (types:FunValue 'getChar '() (types:make-StringType)))
+    (extend-env env 'ord (types:FunValue 'ord (list (types:NameTypePair (types:make-StringType) 's )) (types:make-IntType)))
+    (extend-env env 'chr (types:FunValue 'chr (list (types:NameTypePair (types:make-IntType) 's )) (types:make-StringType)))
+    (extend-env env 'size (types:FunValue 'size (list (types:NameTypePair (types:make-StringType) 's )) (types:make-IntType)))
+    (extend-env env 'substring (types:FunValue 'substring (list (types:NameTypePair (types:make-StringType) 's ) (types:NameTypePair (types:make-IntType) 'first)
                                                     (types:NameTypePair (types:make-IntType) 'n)) (types:make-StringType)))
-    (extend-env env 'concat (types:FunValue (list(types:NameTypePair (types:make-StringType) 's1) (types:NameTypePair (types:make-StringType) 's2))
+    (extend-env env 'concat (types:FunValue 'concat (list(types:NameTypePair (types:make-StringType) 's1) (types:NameTypePair (types:make-StringType) 's2))
                                             (types:make-StringType)))
-    (extend-env env 'not (types:FunValue (types:NameTypePair (types:make-BoolType) 'i) (types:make-IntType)))
-    (extend-env env 'exit (types:FunValue (types:NameTypePair (types:make-IntType) 'i) (types:make-IntType)))
+    (extend-env env 'not (types:FunValue 'not (types:NameTypePair (types:make-BoolType) 'i) (types:make-IntType)))
+    (extend-env env 'exit (types:FunValue 'exit (types:NameTypePair (types:make-IntType) 'i) (types:make-IntType)))
     env))
     
 (define (tc-str str)
@@ -38,19 +38,19 @@
     (extend-env env 'string (types:make-StringType))
     (extend-env env 'bool (types:make-BoolType))
     (extend-env env 'peng (types:make-PengType))
-    (extend-env env 'print (types:FunValue (list (types:NameTypePair (types:make-StringType) 's )) (types:make-VoidType)))
-    (extend-env env 'printi (types:FunValue (list (types:NameTypePair (types:make-IntType) 'x))(types:make-VoidType)))
-    (extend-env env 'flush (types:FunValue '() (types:make-VoidType)))
-    (extend-env env 'getChar (types:FunValue '() (types:make-StringType)))
-    (extend-env env 'ord (types:FunValue (list (types:NameTypePair (types:make-StringType) 's )) (types:make-IntType)))
-    (extend-env env 'chr (types:FunValue(list (types:NameTypePair (types:make-IntType) 's )) (types:make-StringType)))
-    (extend-env env 'size (types:FunValue (list (types:NameTypePair (types:make-StringType) 's )) (types:make-IntType)))
-    (extend-env env 'substring (types:FunValue(list (types:NameTypePair (types:make-StringType) 's ) (types:NameTypePair (types:make-IntType) 'first)
+    (extend-env env 'print (types:FunValue 'print (list (types:NameTypePair (types:make-StringType) 's )) (types:make-VoidType)))
+    (extend-env env 'printi (types:FunValue 'printi (list (types:NameTypePair (types:make-IntType) 'x))(types:make-VoidType)))
+    (extend-env env 'flush (types:FunValue 'flush '() (types:make-VoidType)))
+    (extend-env env 'getChar (types:FunValue 'getChar '() (types:make-StringType)))
+    (extend-env env 'ord (types:FunValue 'ord (list (types:NameTypePair (types:make-StringType) 's )) (types:make-IntType)))
+    (extend-env env 'chr (types:FunValue 'chr (list (types:NameTypePair (types:make-IntType) 's )) (types:make-StringType)))
+    (extend-env env 'size (types:FunValue 'size (list (types:NameTypePair (types:make-StringType) 's )) (types:make-IntType)))
+    (extend-env env 'substring (types:FunValue 'substring (list (types:NameTypePair (types:make-StringType) 's ) (types:NameTypePair (types:make-IntType) 'first)
                                                     (types:NameTypePair (types:make-IntType) 'n)) (types:make-StringType)))
-    (extend-env env 'concat (types:FunValue (list(types:NameTypePair (types:make-StringType) 's1) (types:NameTypePair (types:make-StringType) 's2))
+    (extend-env env 'concat (types:FunValue 'concat (list(types:NameTypePair (types:make-StringType) 's1) (types:NameTypePair (types:make-StringType) 's2))
                                             (types:make-StringType)))
-    (extend-env env 'not (types:FunValue (types:NameTypePair (types:make-BoolType) 'i) (types:make-IntType)))
-    (extend-env env 'exit (types:FunValue (types:NameTypePair (types:make-IntType) 'i) (types:make-IntType)))
+    (extend-env env 'not (types:FunValue 'not (types:NameTypePair (types:make-BoolType) 'i) (types:make-IntType)))
+    (extend-env env 'exit (types:FunValue 'exit (types:NameTypePair (types:make-IntType) 'i) (types:make-IntType)))
     
   
     
@@ -58,14 +58,14 @@
     (typeCheck (first (parse-str str)) env #f 0)))
 
 
-(define (nameFields fields env)
+(define (nameFields fields env level)
 
   (map (lambda (field)
          (let ([NTPair 
          (types:NameTypePair                
           (apply-env env (string->symbol (TypeField-kind field)))
           (string->symbol (TypeField-name field)))])
-           (types:set-NameTypePair-result! NTPair (types:VarValue (apply-env env (string->symbol (TypeField-kind field))) #f))
+         ;  (types:set-NameTypePair-result! NTPair (types:VarValue (apply-env env (string->symbol (TypeField-kind field))) #f level #f #f))
            NTPair)) fields)
        )
 
@@ -84,7 +84,7 @@
     ; want to ask if the first name in the FieldAssign matches the first name in the NameTypePair, AND
     ; if the typechecked expression in the first FieldAssign matches the type of the first NameTypePair
     [(and(equal?(string->symbol(FieldAssign-name(first assignments)))(types:NameTypePair-name(first recTyFields)))
-         (equal? (typeCheck (FieldAssign-expr(first assignments)) env inLoop level) (types:NiType-actual (first recTyFields))))
+         (equal? (typeCheck (FieldAssign-expr(first assignments)) env inLoop level) (types:NameTypePair-type (first recTyFields))))
 
      (recordSearch (rest assignments) env recTy (rest recTyFields) inLoop level)]
     [(and(equal?(string->symbol(FieldAssign-name(first assignments)))(types:NameTypePair-name(first recTyFields)))
@@ -142,11 +142,11 @@
                     [(FunDecl name args rettype body next)
                    
                      (set! nameList (cons (string->symbol name) nameList))                
-                     (let* ([nameList (nameFields args env)]
+                     (let* ([nameList (nameFields args env level)]
                            
                            [rTy  (if (equal? rettype #f) (types:make-VoidType)
                                      (begin (apply-env env (string->symbol rettype))))]
-                           [FuncVal (types:FunValue nameList rTy)])
+                           [FuncVal (types:FunValue name nameList rTy)])
                      
                          (printf "~n NAMEFIELDS ~a" nameList)
                        (printf "~n rTy ~a" rTy)
@@ -180,7 +180,7 @@
                      (for-each (lambda (arg)
                                 (let* ([argName (types:NameTypePair-name arg)]
                                        
-                                       [argKind (types:NameTypePair-result arg)])
+                                       [argKind (types:NameTypePair-type arg)])
                                       
                                       
                                   
@@ -198,7 +198,7 @@
         (if (equal? (member (first nameList) (rest nameList)) #f) (nameUnique (rest nameList)) #f))))
         
              
-(define (typeCheckTD decl env name)
+(define (typeCheckTD decl env name level)
   (let ([ARFlag #f]
         [nameList '()]
         [multiF #f])
@@ -210,9 +210,9 @@
                      (begin
                        (cond [(not(empty? next)) (set! multiF #t)])
                        (set! nameList (cons (string->symbol name) nameList))
-                       (extend-env env (string->symbol name) (types:make-NameType '())))]
-                    [(ArrayType name kind next)  (set! nameList (cons (string->symbol name) nameList))(extend-env env (string->symbol name) (types:make-NameType '()))]
-                    [(RecordType name fields next)  (set! nameList (cons (string->symbol name) nameList))(extend-env env (string->symbol name) (types:make-NameType '()))]))
+                       (extend-env env (string->symbol name) (types:make-NameType '() (string->symbol name))))]
+                    [(ArrayType name kind next)  (set! nameList (cons (string->symbol name) nameList))(extend-env env (string->symbol name) (types:make-NameType '() (string->symbol name)))]
+                    [(RecordType name fields next)  (set! nameList (cons (string->symbol name) nameList))(extend-env env (string->symbol name) (types:make-NameType '()(string->symbol name)))]))
                 decl)
 
     (cond
@@ -225,7 +225,7 @@
                   
                     [(RecordType name fields next)
                      (let ([recTy (apply-env env (string->symbol name))])
-                       (types:set-NiType-actual! recTy (makeRecType name fields next env))
+                       (types:set-NiType-actual! recTy (makeRecType name fields next env level))
                        (set! ARFlag #t))]
 
                     [(ArrayType name kind next)
@@ -240,14 +240,14 @@
     (if (and (equal? ARFlag #f) (equal? multiF #t)) (error "ARFLAG ERROR") #t)))
 
               
-(define (makeRecType name fields next env)
+(define (makeRecType name fields next env level)
   (let ([nameSym (string->symbol name)])
-    ; (printf "nameSym: ~a~n" (nameFields fields env))
-    (types:make-RecordType (nameFields fields env))))
+     (printf "nameSym: ~a~n" (nameFields fields env level))
+    (types:make-RecordType nameSym (nameFields fields env level))))
 
 (define(makeArrType name kind next env)
   (let ([nameSym (string->symbol name)])
-    (types:make-ArrayType (apply-env env (string->symbol kind)))))
+    (types:make-ArrayType name (apply-env env (string->symbol kind)))))
 
 (define(makeNType name kind next env)
   (let ([nameSym (string->symbol name)])
@@ -318,15 +318,15 @@
     
            ;NameType
      
-           [(NameType name kind next) (typeCheckTD ast env name)]
+           [(NameType name kind next) (typeCheckTD ast env name level)]
 
            ;RecordType
            
-           [(RecordType name fields next) (typeCheckTD ast env name)]
+           [(RecordType name fields next) (typeCheckTD ast env name level)]
                  
            ;ArrayType
           
-           [(ArrayType name kind next) (typeCheckTD ast env name)]
+           [(ArrayType name kind next) (typeCheckTD ast env name level)]
 
            ;Numbers
            [(NumExpr val) (let ([ty (types:make-IntType)])
@@ -356,12 +356,12 @@
            ;Check if Record name is a record
            ;Check if field is declared as legit in that record --> return that field's return type
     
-           [(RecordExpr name field) (let* ([nameRec ( name env inLoop level)]
+           [(RecordExpr name field) (let* ([nameRec (typeCheck name env inLoop level)]
                                  
                                            [recField (findit (string->symbol field) (types:RecordType-fields (types:actual-type nameRec)))])
                                       
                                       (cond
-                                        [(and(types:RecordType? (types:actual-type nameRec)) (not(equal? recField #f))) (types:NiType-actual recField)]
+                                        [(and(types:RecordType? (types:actual-type nameRec)) (not(equal? recField #f))) (types:NameTypePair-type recField)]
                                         [else (error "Not a valid Record")]))]
                              
                                
@@ -423,9 +423,9 @@
                   )
            
               (match name
-                [(VarExpr name)(if (eq?(types:VarValue-readOnly (apply-env env (string->symbol name))) #t) (error "ASSERROR")
+                [(VarExpr name)(if (eq?(types:VarValue-read-only? (apply-env env (string->symbol name))) #t) (error "ASSERROR")
                                    (begin
-                                    (let ([t3 (types:VarValue (apply-env env (string->symbol name)) #t)])
+                                    (let ([t3 (types:VarValue (apply-env env (string->symbol name)) #t level #f #f)])
                                        (add-note ast 'varval  t3))
                                        
                                      (cond
@@ -473,9 +473,9 @@
                                      (cond
                                 
                                        [(and (eq? type #f) (not (types:PengType? t1))) (let
-                                                                                           ([vartype (types:VarValue t1 #f)])
-                                                                                         (add-note ast 'varvale vartype)
-                                                                                         ( env (string->symbol id) vartype)
+                                                                                           ([vartype (types:VarValue t1 #f level #f #f)])
+                                                                                         (add-note ast 'varvalue vartype)
+                                                                                         (extend-env env (string->symbol id) vartype) 
                                                                                          vartype)]
                                 
                                        [(and (eq? type #f) (types:PengType? t1)) (error "Assigning Peng Wrong")]
@@ -483,16 +483,17 @@
                                 
                                        [(and (not (eq? type #f))(types:PengType? t1))
                                         (let
-                                            ([vartypeEx (types:VarValue (types:actual-type (apply-env env (string->symbol type))) #f)])
+                                            ([vartypeEx (types:VarValue (types:actual-type (apply-env env (string->symbol type))) #f level #f #f)])
                                           (add-note ast 'varvalue vartypeEx)
+                                          
                                           (extend-env env (string->symbol id) vartypeEx)
                                           vartypeEx)]
                                 
-                          
+                          ;(types:VarValue t1 #f level #f #f)
                                        [(correctComparison (types:actual-type (apply-env env (string->symbol type))) t1)
-                                        (let ([vv (types:VarValue t1 #f)])
+                                        (let ([vv (types:VarValue t1 #f level #f #f)])
                                           (add-note ast 'varvalue vv)
-                                          ( env (string->symbol id) vv)
+                                          (extend-env env (string->symbol id) vv)
                                           vv)]
                                        [(and (types:RecordType? (apply-env env (string->symbol type)))  (types:PengType? t1)) (types:make-VoidType)]
                                 
@@ -538,7 +539,7 @@
                                           
                                            (cond
                                              [(and (types:IntType? expr1) (types:IntType? expr2))(let
-                                                                                                     ([vartype (types:VarValue (types:make-IntType) #t)])
+                                                                                                     ([vartype (types:VarValue (types:make-IntType) #t level #f #f)])
                                                                                                    
                                                                                                    (extend-env env (string->symbol name) vartype)
                                                                                                    (add-note ast 'varvalue vartype))]
@@ -556,7 +557,7 @@
                   [argList (typeCheck args env inLoop level)])
                ;   (printf "ARGLIST ~a~n" argList)
               (let ([funStore 
-                     (funSearch args env id (types:FunValue-parameters id) inLoop)])
+                     (funSearch args env id (types:FunValue-parameters id) inLoop level)])
                 (printf "~n FUNSTORE ~a " funStore)
                 (add-note ast 'FunVal id)
                 (add-note ast 'type funStore)
