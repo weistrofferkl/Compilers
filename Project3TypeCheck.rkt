@@ -100,9 +100,9 @@
     [(not(equal? (length pars) (length funTyFields))) (error "Lengths not equal")]
     ; want to ask if the first name in the FieldAssign matches the first name in the NameTypePair, AND
     ; if the typechecked expression in the first FieldAssign matches the type of the first NameTypePair
-    [(correctComparison (types:actual-type(typeCheck (first pars) env inLoop level)) (types:actual-type(types:NiType-actual (first funTyFields))))
+    [(correctComparison (types:actual-type(typeCheck (first pars) env inLoop level)) (types:actual-type(types:NameTypePair-type (first funTyFields))))
      (begin
-       (funSearch (rest pars) env funTy (rest funTyFields) inLoop))]
+       (funSearch (rest pars) env funTy (rest funTyFields) inLoop level))]
     [else
      (begin
        
@@ -143,6 +143,7 @@
                    
                      (set! nameList (cons (string->symbol name) nameList))                
                      (let* ([nameList (nameFields args env level)]
+                            
                            
                            [rTy  (if (equal? rettype #f) (types:make-VoidType)
                                      (begin (apply-env env (string->symbol rettype))))]
@@ -184,7 +185,7 @@
                                       
                                       
                                   
-                                  (extend-env newScopeEnv argName argKind)
+                                  (extend-env newScopeEnv argName (types:VarValue argKind #f level #f #f))
 
                                   )) (types:FunValue-parameters funTy))
 
@@ -367,6 +368,7 @@
                                
            ;Variable Expression:
            [(VarExpr name) (let ([t1 (apply-env env(string->symbol name))])
+                             (if (< (types:VarValue-level t1) level) (types:set-VarValue-escape?! t1 #t) (types:set-VarValue-escape?! t1 #f))
                              (printf "VarExpr lookup is: ~a~n" t1)
                              (printf "NAME~a~n" name)
                              (cond
