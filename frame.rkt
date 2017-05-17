@@ -1,6 +1,6 @@
 #lang racket
 
-(require "types.rkt"
+(require "Project3Types.rkt"
          "names.rkt")
 
 (provide (all-defined-out))
