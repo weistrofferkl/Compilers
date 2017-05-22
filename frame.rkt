@@ -15,8 +15,8 @@
 ; many locals and escaping variables have been seen, and finally, a
 ; reference to the funval associated with this Frame (because we'll need
 ; parameters
-(struct Frame (name
-               [static-link #:mutable]
+(struct Frame (name ;label of surounding function
+               [static-link #:mutable] ;points to outerframe, top of stack
                [offset #:mutable]
                [funval #:mutable])
   #:transparent
