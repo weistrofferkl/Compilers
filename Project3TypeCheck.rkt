@@ -181,11 +181,13 @@
                      (for-each (lambda (arg)
                                 (let* ([argName (types:NameTypePair-name arg)]
                                        
-                                       [argKind (types:NameTypePair-type arg)])
+                                       [argKind (types:NameTypePair-type arg)]
+                                       [varV (types:VarValue argKind #f level #f #f)])
+                                  (add-note arg 'varvalue varV)
                                       
                                       
                                   
-                                  (extend-env newScopeEnv argName (types:VarValue argKind #f level #f #f))
+                                  (extend-env newScopeEnv argName varV)
 
                                   )) (types:FunValue-parameters funTy))
 

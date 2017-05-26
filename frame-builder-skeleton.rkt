@@ -43,8 +43,22 @@
                   [(eq? mode 'pre)
                    (let* ([name (make-label)]
                           [funval (get-note node 'FunVal)]
-                          [thisFrame(Frame name (Frame-name(peek)) #f funval)])
+                          [parameters (t:FunValue-parameters funval)]
+                          [thisFrame(Frame name (Frame-name(peek)) WORD_SIZE funval)])
                      (t:set-FunValue-frame! funval thisFrame)
+                     (for-each (lambda (parameter)
+                               (let ([ty (get-note parameter 'varvalue)]
+                                     )
+                                 (cond
+                                   [(eq? (t:VarValue-escape? ty) #t)
+                                    (let ([offset (alloc-local! (peek) ty)])
+                                      (t:set-VarValue-offset! ty offset) 
+                                      (printf "Parameter ~a of function ~a has escaped~n" (t:NameTypePair-name parameter) name))]
+                                   [else (printf "Heello")])))
+                               parameters)
+                                      
+                                 
+                                    
                   
                      (push thisFrame)
                      
@@ -60,6 +74,17 @@
                    (pop)
                    ;pop frame from stack)
                    ])]
+             [(VarDecl type id expr)
+              (when (eq? mode 'post)
+              (let ([varV (get-note node 'varvalue)])
+              (cond
+           
+                [(eq? (t:VarValue-escape? varV) #t)
+                 (let ([offset (alloc-local! (peek) type)])
+                    (t:set-VarValue-offset! varV offset) 
+                 (printf "Variable ~a has escaped, Offset: ~a, Level: ~a~n" id (t:VarValue-offset (get-note node 'varvalue))(t:VarValue-level (get-note node 'varvalue)))
+                   )])))]
+             
              [_ '()]))])
     (ast-walk walker ast)))
 
