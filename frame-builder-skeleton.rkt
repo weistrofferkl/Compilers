@@ -54,7 +54,7 @@
                                     (let ([offset (alloc-local! (peek) ty)])
                                       (t:set-VarValue-offset! ty offset) 
                                       (printf "Parameter ~a of function ~a has escaped~n" (t:NameTypePair-name parameter) name))]
-                                   [else (printf "Heello")])))
+                                   [else (printf "Hello from else~n")])))
                                parameters)
                                       
                                  

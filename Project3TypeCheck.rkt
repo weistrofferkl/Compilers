@@ -174,7 +174,7 @@
                    (let* ([newScopeEnv (push-scope env)]
                           ; grab the fun val here
                           [funTy (apply-env env (string->symbol name))]
-                          [level (add1 level)]
+                          [newLevel (add1 level)]
                           [rTy  (if (eq? #f rettype) (types:make-VoidType) (apply-env env (string->symbol rettype)))])
 
                      ; extend the environment with the varvalues associated with each parameter
@@ -182,7 +182,7 @@
                                 (let* ([argName (types:NameTypePair-name arg)]
                                        
                                        [argKind (types:NameTypePair-type arg)]
-                                       [varV (types:VarValue argKind #f level #f #f)])
+                                       [varV (types:VarValue argKind #f newLevel #f #f)])
                                   (add-note arg 'varvalue varV)
                                       
                                       
@@ -191,7 +191,7 @@
 
                                   )) (types:FunValue-parameters funTy))
 
-                     (if (equal? (typeCheck body newScopeEnv inLoop level) rTy) rTy (error "Not equal to return type"))
+                     (if (equal? (typeCheck body newScopeEnv inLoop newLevel) rTy) rTy (error "Not equal to return type"))
                   
                      )]))decl))
 
