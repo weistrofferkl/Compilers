@@ -46,6 +46,7 @@
                           [parameters (t:FunValue-parameters funval)]
                           [thisFrame(Frame name (Frame-name(peek)) WORD_SIZE funval)])
                      (t:set-FunValue-frame! funval thisFrame)
+                     (push thisFrame)
                      (for-each (lambda (parameter)
                                (let ([ty (get-note parameter 'varvalue)]
                                      )
@@ -60,7 +61,7 @@
                                  
                                     
                   
-                     (push thisFrame)
+                     ;(push thisFrame)
                      
                      )
                      
@@ -83,7 +84,8 @@
                  (let ([offset (alloc-local! (peek) type)])
                     (t:set-VarValue-offset! varV offset) 
                  (printf "Variable ~a has escaped, Offset: ~a, Level: ~a~n" id (t:VarValue-offset (get-note node 'varvalue))(t:VarValue-level (get-note node 'varvalue)))
-                   )])))]
+                   )]
+                [else (printf "Variable: ~a in register~n" id)])))]
              
              [_ '()]))])
     (ast-walk walker ast)))

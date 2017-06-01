@@ -370,7 +370,7 @@
                                
            ;Variable Expression:
            [(VarExpr name) (let ([t1 (apply-env env(string->symbol name))])
-                             (if (< (types:VarValue-level t1) level) (types:set-VarValue-escape?! t1 #t) (types:set-VarValue-escape?! t1 #f))
+                             (when (< (types:VarValue-level t1) level) (types:set-VarValue-escape?! t1 #t))
                              (printf "VarExpr lookup is: ~a~n" t1)
                              (printf "NAME~a~n" name)
                              (cond
