@@ -72,12 +72,36 @@
            [(BoolExpr _ _ _) (bool->iloc ast alist)]
 
            [(LogicExpr _ _ _) (logic->iloc ast alist)]
+           [(LetExpr _ _ ) (letexpr->iloc ast alist)]
+
+       ;    [(VarDecl _ _ _) (varDecl->iloc ast alist)]
            ; translate boolean values, which are integer 1 and 0s
            [(BoolVal val) (boolVal->iloc val alist)]
            [_ (error "Translation of " ast " not implemented yet")])])
     result))
 
 
+(define (varDecl->iloc ast alist)
+
+  (let ([result(make-temp-result)])
+   (array-list-add-item! alist (loadI ast result #f)))
+     
+  )
+
+
+;Let Expressions
+(define (letexpr->iloc node alist)
+  (match node
+    [(LetExpr decls exprs)
+     (begin
+       (let* ([declsRet (ast->iloc! decls alist)]
+             [exprsRet (ast->iloc! exprs alist)]
+             [thingReturn (get-note (last exprs) 'result)])
+           
+         (add-note node 'result thingReturn)
+         thingReturn
+         
+         ))]))
 ; to load a number into a register, since we pretty much need to do that
 ; with values (well, we could see if it's a math expression or something else
 ; but that's later with optimization

@@ -78,6 +78,9 @@
 (define (make-frame-result)
   (Result (make-label) #f #f))
 
+(define (make-frame-offset sym)
+  (Result (Label (string-append "@" (symbol->string sym))) #f #f))
+
 ; construct a temp result
 (define (make-temp-result)
   (Result (make-temp) #f #f))
@@ -89,9 +92,12 @@
     [(Result (Label name) #t _)
      (string-append "@" name)]
     [(Result (Label name) #f _)
-     (string-append "%" name)]
+     (if (and (> (string-length name) 0) (equal? (string-ref name 0) #\@))
+         name
+         (string-append "%" name))]
     [(Result (Temp name num) _ _)
-     (string-append "%" name)]))
+     (string-append "%" name)]
+    [else (error "Unknown result type!")]))
 
 ; true or false if the result is a temp kind
 (define (in-register? res)
@@ -108,10 +114,3 @@
 ; it's a one way trip, haha
 (define (set-global! res)
   (set-Result-global?! res #t))
-
-
-
-
-
-    
-     

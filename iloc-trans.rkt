@@ -10,6 +10,24 @@
          data/gvector)
 
 (provide (all-defined-out))
+
+;;;;; REGISTERS AND OFFSETS ;;;;;;
+;;
+;; These define static register names (Rarp) and offsets for various fields
+;; in our activation record. We use these instead of hard numbers so we can
+;; optimize (possibily?) and delay deciding on the actual frame layout until later!
+(define Rarp (Result (Temp "Rarp" 0) #f #f))
+; holds an offset for the static link
+(define static-link-offset (make-frame-offset 'static-link))
+; holds an offset for the return address
+(define return-addr-offset (make-frame-offset 'return-addr))
+; holds an offset for the address of where to store the return value
+(define return-value-offset (make-frame-offset 'return-value))
+; holds an offset for the address of the previous activation record, this is
+; used because we can just store where to pop off a record instead of
+; needing to figure out the math for it later
+(define previous-arp (make-frame-offset 'previous-arp))
+
 ; simple translator that only outputs the stuff that you've added, not all
 ; the preamble and postamble materials
 (define (trans str)
