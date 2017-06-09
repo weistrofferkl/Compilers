@@ -103,6 +103,8 @@
 (iloc-child cbr_GT)    ; l2 -> PC if cc3 = GT, otherwise l3 -> PC
 (iloc-child cbr_NE)    ; l2 -> PC if cc3 = NE, otherwise l3 -> PC
 
+(iloc-child nop)
+
 (define (display-iloc ir out)
   (let ([src1 (iloc-src1 ir)]
         [src2 (iloc-src2 ir)]

@@ -7,8 +7,13 @@
          "errors.rkt"
          "Project3TypeCheck.rkt"
          "names.rkt"
+         ;"Project3Types.rkt"
+         (prefix-in types: "Project3Types.rkt")
          data/gvector)
+
+
 ;Booleans, Logic
+  (define rarp_pntr (Result (Temp "Rarp" 0) #f #f))
 
 (provide (all-defined-out))
 ; simple translator that only outputs the stuff that you've added, not all
@@ -74,19 +79,38 @@
            [(LogicExpr _ _ _) (logic->iloc ast alist)]
            [(LetExpr _ _ ) (letexpr->iloc ast alist)]
 
-       ;    [(VarDecl _ _ _) (varDecl->iloc ast alist)]
+           [(VarDecl _ _ _) (varDecl->iloc ast alist)]
+
+           [(FunDecl _ _ _ _ _) (FunDecl->iloc ast alist)]
            ; translate boolean values, which are integer 1 and 0s
            [(BoolVal val) (boolVal->iloc val alist)]
            [_ (error "Translation of " ast " not implemented yet")])])
     result))
 
 
+(define (FunDecl->iloc ast alist)
+  (nop #f #f #f))
+
+
 (define (varDecl->iloc ast alist)
 
-  (let ([result(make-temp-result)])
-   (array-list-add-item! alist (loadI ast result #f)))
+  (if (eq?(types:VarValue-escape? (get-note ast 'varvalue)) #f)
+  (let ([result(make-temp-result)]
+        [name (VarDecl-id ast)]
+        [exp (VarDecl-expr ast)])
+    ;(ast->iloc! exp alist)
+    (array-list-add-item! alist (i2i (ast->iloc! exp alist) result #f)))
+   (let* ([result(make-temp-result)]
+        [name (VarDecl-id ast)]
+        [exp (VarDecl-expr ast)]
+        [evalExp (ast->iloc! exp alist)])
+      ;(ast->iloc! exp alist)
+      ;(string-append "@" name)
+      
+      (array-list-add-item! alist (storeAO rarp_pntr evalExp #f))
+    
      
-  )
+  )))
 
 
 ;Let Expressions
@@ -96,7 +120,7 @@
      (begin
        (let* ([declsRet (ast->iloc! decls alist)]
              [exprsRet (ast->iloc! exprs alist)]
-             [thingReturn (get-note (last exprs) 'result)])
+             [thingReturn (when (not(empty? exprs))(get-note (last exprs) 'result))])
            
          (add-note node 'result thingReturn)
          thingReturn
